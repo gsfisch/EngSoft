@@ -5,7 +5,6 @@ import pyrebase
 app = Flask(__name__,template_folder='view')
 app.secret_key = 'secret'
 
-#TODO: passar o firebase config para um arquivo json privado
 firebaseConfig =  {
     'apiKey': config("FIREBASE_API_KEY"),
     'authDomain': config("FIREBASE_AUTH_DOMAIN"),
