@@ -1,5 +1,6 @@
 # DB credentials
 credentials.json
+appConfig.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
