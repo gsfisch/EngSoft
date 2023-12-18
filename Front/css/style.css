@@ -1,0 +1,141 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
+* {
+	font-family: 'Montserrat', sans-serif;
+}
+.card-login {
+	background-color : #141615;
+	color: #fbdfc9;
+	
+}
+.card-login:hover{
+	 color: #141615;
+	 background-color:  #fbdfc9;
+}
+
+body {
+	background: #558a60;
+}
+.section-padding {
+	padding: 100px 0;
+}
+.carousel-item {
+	height: 100vh;
+	min-height: 300px;
+}
+.carousel-caption {
+	bottom: 220px;
+	z-index: 2;
+}
+.carousel-caption h5 {
+	font-size: 45px;
+	text-transform: uppercase;
+	letter-spacing: 2px;
+	margin-top: 25px;
+}
+.carousel-caption p {
+	width: 60%;
+	margin: auto;
+	font-size: 18px;
+	line-height: 1.9;
+}
+.carousel-inner:before {
+	content: '';
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	background: rgba(0, 0, 0, 0.7);
+	z-index: 1;
+}
+
+.carousel-button {
+    background-color: #e2a8af; /* Substitua #RRGGBB pela cor desejada em formato hexadecimal */
+    color: #fff; /* Cor do texto do botão (branco neste exemplo) */
+	
+}
+
+.carousel-button:hover {
+	background-color : #141615;
+	color: #fbdfc9;
+}
+
+ 
+.navbar{
+	background-color: #004e2c;
+}
+
+.navbar .getstarted {
+	background: #004e2c;
+	margin-left: 30px;
+	border-radius: 4px;
+	font-weight: 400;
+	color: #c01616;
+	text-decoration: none;
+	padding: .5rem 1rem;
+	line-height: 2.3;
+}
+.navbar-nav a {
+	font-size: px;
+	text-transform: uppercase;
+	font-weight: 500;
+	
+}
+/*Texto Marca*/ 
+.navbar-light .navbar-brand {
+	color: #fbdfc9;
+	font-size: 25px;
+	text-transform: uppercase;
+	font-weight: bold;
+	letter-spacing: 2px;
+}
+.navbar-light .navbar-brand:focus, .navbar-light .navbar-brand:hover {
+	color: #558a60;
+}
+.navbar-light .navbar-nav .nav-link {
+	color: #fbdfc9;
+}
+.navbar-light .navbar-nav .nav-link:focus, .navbar-light .navbar-nav .nav-link:hover {
+	color: #558a60;
+}
+.w-100 {
+	height: 100vh;
+}
+.navbar-toggler {
+	padding: 1px 5px;
+	font-size: 18px;
+	line-height: 0.3;
+	background: #c8b88A;
+}
+.bullet {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background-color: #FFF;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+.portfolio .card {
+	box-shadow: 15px 15px 40px rgba(0, 0, 0, 0.15);
+}
+.team .card {
+	box-shadow: 15px 15px 40px rgba(0, 0, 0, 0.15);
+}
+.services .card-body i {
+	font-size: 50px;
+}
+.team .card-body i {
+	font-size: 20px;
+}
+
+.map-container {
+	max-width: 100%; /* Define a largura máxima da div */
+	overflow: hidden; /* Oculta o overflow do iframe para evitar exceder a largura */
+}
+
+.custom-height {
+    height: 300px; /* Defina a altura desejada aqui */
+}
+
+
+
