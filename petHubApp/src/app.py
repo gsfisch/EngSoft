@@ -27,8 +27,6 @@ def index():
 @app.route("/login", methods =['POST', 'GET'])
 def login():
 
-    if('user' in session):
-        return 'Hi, {}'.format(session['user'])
     
     if request.method == 'POST':
         email = request.form.get('email')
