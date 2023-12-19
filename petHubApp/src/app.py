@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, session
 from decouple import config
 import pyrebase
+from json import dumps
+
 
 app = Flask(__name__,template_folder='view')
 app.secret_key = 'secret'
@@ -42,6 +44,27 @@ def login():
 
 @app.route("/cadastro", methods =['POST', 'GET'])
 def cadastro():
+    if request.method == 'POST':
+        # Obtenha os dados do formulário
+        email = request.form.get('email')
+        password = request.form.get('password')
+        display_name = request.form.get('display_name')
+
+        try:
+            # Crie um novo usuário no Firebase Authentication
+            # user = auth.create_user(
+            #     email=email,
+            #     password=password,
+            #     display_name=display_name
+            # )
+
+            # Realize ações adicionais conforme necessário
+
+            return dumps(user)
+
+        except Exception as e:
+            return dumps(str(e))
+
     return render_template('cadastro.html')
 
 
