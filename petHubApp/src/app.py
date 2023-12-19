@@ -22,6 +22,10 @@ auth=firebase.auth()
 
 @app.route("/", methods =['POST', 'GET'])
 def index():
+    return render_template('index.html')
+
+@app.route("/login", methods =['POST', 'GET'])
+def login():
 
     if('user' in session):
         return 'Hi, {}'.format(session['user'])
@@ -36,11 +40,11 @@ def index():
         except:
             return 'Failed to login'
         
-    return render_template('index.html')
+    return render_template('login.html')
 
-@app.route("/logout")
-def logout():
-    session.pop('user')
-    return redirect("/");
+@app.route("/cadastro", methods =['POST', 'GET'])
+def cadastro():
+    return render_template('cadastro.html')
+
 
 
