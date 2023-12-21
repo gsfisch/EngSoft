@@ -29,6 +29,8 @@ def index():
 @app.route("/login", methods =['POST', 'GET'])
 def login():
 
+    if('user' in session):
+      return 'Hi, {}'.format(session['user'])
     
     if request.method == 'POST':
         email = request.form.get('email')
@@ -37,6 +39,7 @@ def login():
             user = auth.sign_in_with_email_and_password(email, password)
             print(user)
             session['user'] = email
+            return redirect('/login')
         except:
             return 'Failed to login'
         

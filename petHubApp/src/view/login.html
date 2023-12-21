@@ -41,17 +41,17 @@
 						<h5 class="card-title text-center ">Login</h5>
 						
 						<!-- Formulário de Login -->
-						<form>
+						<form action="/login" method="POST">
 							<!-- Campo de Usuário -->
 							<div class="form-group mb-3">
-								<label for="username">Usuário:</label>
-								<input type="text" class="form-control" id="username" placeholder="Digite seu usuário">
+								<label for="email">Usuário:</label>
+								<input type="text" class="form-control" name="email" id="email" placeholder="Digite seu usuário">
 							</div>
 							
 							<!-- Campo de Senha -->
 							<div class="form-group mb-3">
 								<label for="password">Senha:</label>
-								<input type="password" class="form-control" id="password" placeholder="Digite sua senha">
+								<input type="password" class="form-control" name="password" id="password" placeholder="Digite sua senha">
 							</div>
 							
 							<!-- Botão de Login -->
