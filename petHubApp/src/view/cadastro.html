@@ -86,9 +86,9 @@
 							<div class="form-group mb-3">
 								<label for="password">Confirme sua senha:</label>
 								<input type="password" class="form-control" name="password2" id="password2" placeholder="Confirme sua senha">
-								{% with different_passwords_message = get_flashed_messages(category_filter='different_passwords_message') %}
-									{% if different_passwords_message %}
-										{% for message in different_passwords_message %}
+								{% with invalid_password_message = get_flashed_messages(category_filter='invalid_password_message') %}
+									{% if invalid_password_message %}
+										{% for message in invalid_password_message %}
 										<div class="flash_alerta">
 											{{ message }}
 										</div>

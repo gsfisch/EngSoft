@@ -85,6 +85,7 @@ def login():
                 return render_template('login.html')
             elif len(password) < 7:
                 flash("senha ou usuário inválidos", "invalid_user_password_message")
+                return render_template('login.html')
             else:
                 # busca no banco de dados o usuário pelo número do documento
                 loginUser = users.child(document_number_formatted).get()
@@ -113,11 +114,14 @@ def is_document_number_unique(document_number):
     return True if query == None else False
  
     
-def invalid_password_or_document(password_encoded, password_confirmation_encoded, document_number):
+def invalid_password_or_document(password_encoded, password_confirmation_encoded, password_length, document_number):
     wrong_password = False
     unique_document = True
     if  password_encoded != password_confirmation_encoded:
-        flash("as senhas escolhidas divergem", "different_passwords_message")
+        flash("as senhas escolhidas divergem", "invalid_password_message")
+        wrong_password = True
+    elif password_length < 7:
+        flash("senha inválida: a senha precisa ter no mínimo 6 caracteres", "invalid_password_message")
         wrong_password = True
             
     if not is_document_number_unique(document_number):
@@ -139,6 +143,7 @@ def cadastro():
         document = request.form.get('cpfOuCnpj')
         document_formatted = document.replace("-", "").replace(".", "").replace("/", "")
         password = request.form.get('password1')
+        password_length = len(password)
         password_confirmation = request.form.get('password2')
         # TODO: teremos profile picture?
         # profilePicture = request.form.get('profilePicture')
@@ -147,10 +152,9 @@ def cadastro():
         password_encoded = password.encode('utf-8')
         password_confirmation_encoded = password_confirmation.encode('utf-8')
 
-        if invalid_password_or_document(password_encoded, password_confirmation_encoded, document_formatted):
+        if invalid_password_or_document(password_encoded, password_confirmation_encoded, password_length, document_formatted):
             return redirect('/cadastro')
         else:
-
             # Create a SHA-1 hash object
             sha1 = hashlib.sha1()
 
