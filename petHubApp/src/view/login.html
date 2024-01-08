@@ -60,6 +60,15 @@
 							<div class="form-group mb-3">
 								<label for="password">Senha:</label>
 								<input type="password" class="form-control" name="password" id="password" placeholder="Digite sua senha">
+								{% with invalid_user_password_message = get_flashed_messages(category_filter='invalid_user_password_message') %}
+									{% if invalid_user_password_message %}
+										{% for message in invalid_user_password_message %}
+										<div class="flash_alerta">
+											{{ message }}
+										</div>
+										{% endfor %}
+									{% endif %}
+								{% endwith %}
 							</div>
 							
 							<!-- Botão de Login -->
@@ -92,7 +101,7 @@
 				$(loginInputId).mask((cpf.length > 14) ? masks[1] : masks[0], op);
 			}
 		}
-		
+
 		$(loginInputId).length > 11 ? $(loginInputId).mask('00.000.000/0000-00', options) : $(loginInputId).mask('000.000.000-00#', options);
    </script>
 </body>

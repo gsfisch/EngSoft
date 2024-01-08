@@ -83,24 +83,25 @@ def login():
             document_number_formatted = document_number.replace("-", "").replace(".", "").replace("/", "")
             if invalid_document_number(document_number_formatted):
                 return render_template('login.html')
+            elif len(password) < 7:
+                flash("senha ou usuário inválidos", "invalid_user_password_message")
             else:
+                # busca no banco de dados o usuário pelo número do documento
                 loginUser = users.child(document_number_formatted).get()
 
-                #Hash that Passsword
+                # encodifica a senha do usuário
                 password_encoded = password.encode('utf-8')
-
-                # Create a SHA-1 hash object
                 sha1 = hashlib.sha1()
-
                 # Update the hash object with the encoded password
                 sha1.update(password_encoded)
-
                 # Get the hexadecimal representation of the hash
                 hashed_password = sha1.hexdigest()
             
                 if loginUser['userPassword'] == hashed_password:
                     session['user'] = loginUser['userName']
                     return redirect('/user')
+                else:
+                    flash("senha ou usuário inválidos", "invalid_user_password_message")
         except:
             return render_template('login.html')
     if request.method == "GET":
