@@ -46,9 +46,9 @@
 							<div class="form-group mb-3">
 								<label for="text">Usuário:</label>
 								<input type="text" class="form-control" name="document" id="document" placeholder="Digite seu cpf/cnpj">
-								{% with invalid_document_number_message = get_flashed_messages(category_filter='invalid_document_number_message') %}
-									{% if invalid_document_number_message %}
-										{% for message in invalid_document_number_message %}
+								{% with invalid_document_message = get_flashed_messages(category_filter='invalid_document_message') %}
+									{% if invalid_document_message %}
+										{% for message in invalid_document_message %}
 										<div class="flash_alerta">
 											{{ message }}
 										</div>

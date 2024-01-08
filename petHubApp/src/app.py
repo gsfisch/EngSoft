@@ -58,17 +58,17 @@ def user():
     return render_template('perfil.html')
 
 def invalid_document_number(document_number):
-    invalid_document_number = False
+    is_invalid_document_number = False
     if  len(document_number) < 11: 
-        flash("número de documento inválido", "invalid_document_number_message")
-        invalid_document_number = True
+        flash("número de documento inválido", "invalid_document_message")
+        is_invalid_document_number = True
             
     if len(document_number) > 11 and len(document_number) < 14:
-        flash("número de documento inválido", "invalid_document_number_message")
-        invalid_document_number = True
-        
-    if  invalid_document_number:
-        return True
+        flash("número de documento inválido", "invalid_document_message")
+        is_invalid_document_number = True
+
+    return is_invalid_document_number 
+       
 
 @app.route("/login", methods =['POST', 'GET'])
 def login():
@@ -117,18 +117,23 @@ def is_document_number_unique(document_number):
 def invalid_password_or_document(password_encoded, password_confirmation_encoded, password_length, document_number):
     wrong_password = False
     unique_document = True
+    is_invalid_document_number = False
+
     if  password_encoded != password_confirmation_encoded:
         flash("as senhas escolhidas divergem", "invalid_password_message")
         wrong_password = True
     elif password_length < 7:
         flash("senha inválida: a senha precisa ter no mínimo 6 caracteres", "invalid_password_message")
         wrong_password = True
-            
+    
+    if invalid_document_number(document_number):
+        is_invalid_document_number = True
+    
     if not is_document_number_unique(document_number):
-        flash("documento já cadastrado", "already_existing_document")
+        flash("documento já cadastrado", "invalid_document_message")
         unique_document = False
         
-    if  wrong_password or not unique_document:
+    if  wrong_password or not unique_document or  is_invalid_document_number:
         return True
         
 

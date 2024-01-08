@@ -66,9 +66,9 @@
 							<div class="form-group mb-3">
 								<label for="cpfOuCnpj">Informe seu CPF/CNPJ:</label>
 								<input type="text" id="cpfOuCnpj" name="cpfOuCnpj" class="form-control" disabled="true" />
-								{% with already_existing_document = get_flashed_messages(category_filter='already_existing_document') %}
-									{% if already_existing_document %}
-										{% for message in already_existing_document %}
+								{% with invalid_document_message = get_flashed_messages(category_filter='invalid_document_message') %}
+									{% if invalid_document_message %}
+										{% for message in invalid_document_message %}
 										<div class="flash_alerta">
 											{{ message }}
 										</div>
