@@ -57,6 +57,18 @@ def user():
     flash(session['user'], "user_name")
     return render_template('perfil.html')
 
+def invalid_document_number(document_number):
+    invalid_document_number = False
+    if  len(document_number) < 11: 
+        flash("número de documento inválido", "invalid_document_number_message")
+        invalid_document_number = True
+            
+    if len(document_number) > 11 and len(document_number) < 14:
+        flash("número de documento inválido", "invalid_document_number_message")
+        invalid_document_number = True
+        
+    if  invalid_document_number:
+        return True
 
 @app.route("/login", methods =['POST', 'GET'])
 def login():
@@ -65,27 +77,30 @@ def login():
       return redirect('/user')
     
     if request.method == 'POST':
-        document = request.form.get('document')
+        document_number = request.form.get('document')
         password = request.form.get('password')
         try:
-            document_formatted = document.replace("-", "").replace(".", "").replace("/", "")
-            loginUser = users.child(document_formatted).get()
+            document_number_formatted = document_number.replace("-", "").replace(".", "").replace("/", "")
+            if invalid_document_number(document_number_formatted):
+                return render_template('login.html')
+            else:
+                loginUser = users.child(document_number_formatted).get()
 
-            #Hash that Passsword
-            password_encoded = password.encode('utf-8')
+                #Hash that Passsword
+                password_encoded = password.encode('utf-8')
 
-            # Create a SHA-1 hash object
-            sha1 = hashlib.sha1()
+                # Create a SHA-1 hash object
+                sha1 = hashlib.sha1()
 
-            # Update the hash object with the encoded password
-            sha1.update(password_encoded)
+                # Update the hash object with the encoded password
+                sha1.update(password_encoded)
 
-            # Get the hexadecimal representation of the hash
-            hashed_password = sha1.hexdigest()
-        
-            if loginUser['userPassword'] == hashed_password:
-                session['user'] = loginUser['userName']
-                return redirect('/user')
+                # Get the hexadecimal representation of the hash
+                hashed_password = sha1.hexdigest()
+            
+                if loginUser['userPassword'] == hashed_password:
+                    session['user'] = loginUser['userName']
+                    return redirect('/user')
         except:
             return render_template('login.html')
     if request.method == "GET":
