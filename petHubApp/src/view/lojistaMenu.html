@@ -13,28 +13,31 @@
 </head>
 <body>
 	{% include 'navbar.html' %} <!-- Inclui a barra de navegação -->
-    <div class="row  justify-content-center align-items-center" style="margin-top: 100px;">
+    <div class="row justify-content-center align-items-center" style="margin-top: 100px;">
         <div class="col-md-5">
             <div class="card mt-2">
                 <div class="card-body">
-                    <h5 class="card-title text-center ">Área do lojista</h5>
-                        <div class="container-fluid h-100">
-                            <div class="row h-100 justify-content-center align-items-center" style="margin-top: 20px;">
-                                <div class="card" style="margin-bottom: 15px;">
-                                    <!-- <img src="images/petshop.png" class="card-img-top" alt="petshop"> -->
-                                    <div class="card-body">
-                                        <h5 class="card-title">Minha Petshop</h5>
-                                        <p class="card-text">Aqui você consegue cadastrar novos produtos e serviços da sua petshop.</p>
-                                        <a href="/minhaLoja" class="btn btn-primary">Ver minha loja</a>
+                    <h5 class="card-title text-center">Área do lojista</h5>
+                    <div class="container-fluid h-100">
+                        <div class="row h-100 justify-content-center align-items-center" style="margin-top: 20px;">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <img alt="petshop" class="d-block" style="width: 100px; height:auto; margin-right: 10px;" src="{{ url_for('static', filename='img/petshop.png') }}">
+                                        <div>
+                                            <h5 class="card-title">Minha Petshop</h5>
+                                            <p class="card-text">Aqui você consegue cadastrar novos produtos e serviços da sua petshop.</p>
+                                            <a href="/minhaLoja" class="btn btn-primary">Ver minha loja</a>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="card">
-                                    <!-- <img src="..." class="card-img-top" alt="..."> -->
-                                    <div class="card-body">
-                                        <h5 class="card-title">Cadastrar Petshop</h5>
-                                        <p class="card-text">Comece a oferecer seus produtos e serviços na nossa plataforma!</p>
-                                        <a href="/cadastroLoja" class="btn btn-primary">Cadastrar Loja</a>
-                                    </div>
+                            </div>
+                            <div class="card mt-2">
+                                <!-- <img src="..." class="card-img-top" alt="..."> -->
+                                <div class="card-body">
+                                    <h5 class="card-title">Cadastrar Petshop</h5>
+                                    <p class="card-text">Comece a oferecer seus produtos e serviços na nossa plataforma!</p>
+                                    <a href="/cadastroLoja" class="btn btn-primary">Cadastrar Loja</a>
                                 </div>
                             </div>
                         </div>
@@ -42,6 +45,7 @@
                 </div>
             </div>
         </div>
+    </div>
     </body>
 </html>
                         
