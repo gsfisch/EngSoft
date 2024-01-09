@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./petHubApp/src/database"
+    ]
+}

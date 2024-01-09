@@ -137,5 +137,9 @@ body {
     height: 300px; /* Defina a altura desejada aqui */
 }
 
+.flash_alerta{
+	color:red;
+}
+
 
 

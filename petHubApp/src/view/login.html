@@ -44,14 +44,31 @@
 						<form action="/login" method="POST">
 							<!-- Campo de Usuário -->
 							<div class="form-group mb-3">
-								<label for="email">Usuário:</label>
-								<input type="text" class="form-control" name="email" id="email" placeholder="Digite seu usuário">
+								<label for="text">Usuário:</label>
+								<input type="text" class="form-control" name="document" id="document" placeholder="Digite seu cpf/cnpj">
+								{% with invalid_document_message = get_flashed_messages(category_filter='invalid_document_message') %}
+									{% if invalid_document_message %}
+										{% for message in invalid_document_message %}
+										<div class="flash_alerta">
+											{{ message }}
+										</div>
+										{% endfor %}
+									{% endif %}
+								{% endwith %}
 							</div>
-							
 							<!-- Campo de Senha -->
 							<div class="form-group mb-3">
 								<label for="password">Senha:</label>
 								<input type="password" class="form-control" name="password" id="password" placeholder="Digite sua senha">
+								{% with invalid_user_password_message = get_flashed_messages(category_filter='invalid_user_password_message') %}
+									{% if invalid_user_password_message %}
+										{% for message in invalid_user_password_message %}
+										<div class="flash_alerta">
+											{{ message }}
+										</div>
+										{% endfor %}
+									{% endif %}
+								{% endwith %}
 							</div>
 							
 							<!-- Botão de Login -->
@@ -70,12 +87,22 @@
 		</div>
 	</div>
 
-
-    
-
     <!-- Bootstrap JS (Popper.js and jQuery are required for Bootstrap's JavaScript components) -->
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.11/jquery.mask.min.js"></script>
+	<script>
+		const loginInputId = "#document";
+		var options = {
+		onKeyPress: function (cpf, ev, el, op) {
+				var masks = ['000.000.000-000', '00.000.000/0000-00'];
+				$(loginInputId).mask((cpf.length > 14) ? masks[1] : masks[0], op);
+			}
+		}
+
+		$(loginInputId).length > 11 ? $(loginInputId).mask('00.000.000/0000-00', options) : $(loginInputId).mask('000.000.000-00#', options);
+   </script>
 </body>
 </html>
