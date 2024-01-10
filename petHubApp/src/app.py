@@ -56,13 +56,8 @@ def user():
     return render_template('perfil.html')
 
 def invalid_document_number(document_number):
+    return not cpfcnpj.validate(document_number)
 
-    if cpfcnpj.validate(document_number):
-        is_invalid_document_number = False
-    else: 
-        is_invalid_document_number = True
-
-    return is_invalid_document_number 
        
 
 @app.route("/login", methods =['POST', 'GET'])
