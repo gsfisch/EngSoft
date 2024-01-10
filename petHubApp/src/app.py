@@ -7,6 +7,8 @@ import hashlib
 from pprint import pprint
 import firebase_admin
 from firebase_admin import auth, db, credentials
+from pycpfcnpj import cpfcnpj
+
 
 app = Flask(__name__,template_folder='view')
 app.secret_key = 'secret'
@@ -54,13 +56,10 @@ def user():
     return render_template('perfil.html')
 
 def invalid_document_number(document_number):
-    is_invalid_document_number = False
-    if  len(document_number) < 11: 
-        flash("número de documento inválido", "invalid_document_message")
-        is_invalid_document_number = True
-            
-    if len(document_number) > 11 and len(document_number) < 14:
-        flash("número de documento inválido", "invalid_document_message")
+
+    if cpfcnpj.validate(document_number):
+        is_invalid_document_number = False
+    else: 
         is_invalid_document_number = True
 
     return is_invalid_document_number 
@@ -78,6 +77,7 @@ def login():
         try:
             document_number_formatted = document_number.replace("-", "").replace(".", "").replace("/", "")
             if invalid_document_number(document_number_formatted):
+                flash("número de documento inválido", "invalid_document_message")
                 return render_template('login.html')
             elif len(password) < 7:
                 flash("senha ou usuário inválidos", "invalid_user_password_message")
@@ -107,7 +107,11 @@ def login():
         
 
 def is_document_number_unique(document_number):
-    query =  users.child(document_number).get()
+    try:
+        query =  users.child(document_number).get()
+    except:
+        query = None
+
     return True if query == None else False
  
     
@@ -124,6 +128,7 @@ def invalid_password_or_document(password_encoded, password_confirmation_encoded
         wrong_password = True
     
     if invalid_document_number(document_number):
+        flash("número de documento inválido", "invalid_document_message")
         is_invalid_document_number = True
     
     if not is_document_number_unique(document_number):
@@ -164,6 +169,7 @@ def cadastrarUsuario(tipoCadastro, password, password_confirmation, document_for
         # 'profilePicture': profilePicture
         }
         )
+        return redirect('/login')
 
 @app.route("/cadastro", methods =['POST', 'GET'])
 def cadastro():
@@ -178,8 +184,7 @@ def cadastro():
         password_confirmation = request.form.get('password2')
         # TODO: teremos profile picture?
         # profilePicture = request.form.get('profilePicture')
-        cadastrarUsuario("pessoaFisica", password, password_confirmation, document_formatted, name, email, uid)
-        return redirect('/login')
+        return cadastrarUsuario("pessoaFisica", password, password_confirmation, document_formatted, name, email, uid)
     else:
         return render_template('cadastro.html')
 
@@ -207,8 +212,7 @@ def cadastroLoja():
         password_confirmation = request.form.get('password2')
         # TODO: teremos profile picture?
         # profilePicture = request.form.get('profilePicture')
-        cadastrarUsuario("pessoaJuridica", password, password_confirmation, document_formatted, name, email, uid)
-        return redirect('/login')   
+        return cadastrarUsuario("pessoaJuridica", password, password_confirmation, document_formatted, name, email, uid)
     else:
         return render_template('cadastroLoja.html')
     
