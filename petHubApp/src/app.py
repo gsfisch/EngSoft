@@ -254,9 +254,9 @@ def deletarConta():
          if(session["userType"] == "pessoaJuridica"):
             return render_template("/minhaLoja.html")
          elif(session["userType"] == "pessoaFisica"):
-            flash("Você não tem acesso a esta sessão logado como pessoa física.", "unauthorized_user_message_minhaLoja")
             return render_template("/perfil.html")
-  
+        
+
 
 @app.route("/navbar")
 def navbar():
