@@ -52,8 +52,13 @@ def index():
 
 @app.route("/user", methods =['POST', 'GET'])
 def user():
-    flash(session['user'], "user_name")
-    return render_template('perfil.html')
+     if(session["userType"] == "pessoaJuridica"):
+        return redirect("/minhaLoja")
+     elif(session["userType"] == "pessoaFisica"):
+        flash(session["user"], "user_name")
+        return render_template("perfil.html")
+   
+    
 
 def invalid_document_number(document_number):
     return not cpfcnpj.validate(document_number)
@@ -91,11 +96,18 @@ def login():
             
                 if loginUser['userPassword'] == hashed_password:
                     session['user'] = loginUser['userName']
-                    return redirect('/user')
+                    session["documentNumber"] = document_number_formatted
+                    session["userType"] = "pessoaJuridica" if len(document_number_formatted) > 11 else "pessoaFisica"
+                    if(session["userType"] == "pessoaJuridica"):
+                        return redirect("/minhaLoja")
+                    elif(session["userType"] == "pessoaFisica"):
+                        return redirect("/user")
+                    # vai ter o login de administrador também
                 else:
                     flash("senha ou usuário inválidos", "invalid_user_password_message")
-                    return redirect('/login')
+                    return redirect("/login")
         except:
+            flash("senha ou usuário inválidos", "invalid_user_password_message")
             return render_template('login.html')
     if request.method == "GET":
         return render_template('login.html')
@@ -156,13 +168,13 @@ def cadastrarUsuario(tipoCadastro, password, password_confirmation, document_for
         
         #Database Directive
         users.child(document_formatted).set(
-        {
-        'uid': uid,
-        'userName': name,
-        'userPassword':  hashed_password,
-        'userEmail': email,
-        # 'profilePicture': profilePicture
-        }
+            {
+                'uid': uid,
+                'userName': name,
+                'userPassword':  hashed_password,
+                'userEmail': email,
+                # 'profilePicture': profilePicture
+            }
         )
         return redirect('/login')
 
@@ -191,11 +203,26 @@ def lojista():
 @app.route("/minhaLoja")
 def loja():
     if('user' in session):
-      print(user)
-    return render_template("/minhaLoja.html")
+        if(session["userType"] == "pessoaJuridica"):
+            flash(session["user"], "user_name")
+            return render_template("/minhaLoja.html")
+        elif(session["userType"] == "pessoaFisica"):
+             flash("Você não tem acesso a esta sessão logado como pessoa física.", "unauthorized_user_message_minhaLoja")
+             return render_template("/lojistaMenu.html")
+    else:
+        return render_template("/login.html")
 
 @app.route("/cadastroLoja", methods =['POST', 'GET'])
 def cadastroLoja():
+
+    if("user" in session):
+        if(session["userType"] == "pessoaJuridica"):
+            flash("Você não tem acesso a esta sessão já logado como pessoa jurídica.", "unauthorized_user_message_cadastroLoja")
+            return render_template("/lojistaMenu.html")
+        elif(session["userType"] == "pessoaFisica"):
+             flash("Você não tem acesso a esta sessão logado como pessoa física.", "unauthorized_user_message_cadastroLoja")
+             return render_template("/lojistaMenu.html")
+     
     if request.method == 'POST':
         idx = uuid.uuid4(),
         uid = str(idx) 
@@ -213,8 +240,23 @@ def cadastroLoja():
     
 @app.route("/logout", methods =['GET'])
 def logout():
-    session.pop('user')
+    session.pop("user")
     return redirect("/")
+
+@app.route("/excluirConta", methods =["GET"])
+def deletarConta():
+    try:
+        users.child(session["documentNumber"]).delete()
+        session.pop("user")
+        return redirect("/")
+    except:
+         flash("Erro ao deletar conta.", "error_message_delete_account")
+         if(session["userType"] == "pessoaJuridica"):
+            return render_template("/minhaLoja.html")
+         elif(session["userType"] == "pessoaFisica"):
+            flash("Você não tem acesso a esta sessão logado como pessoa física.", "unauthorized_user_message_minhaLoja")
+            return render_template("/perfil.html")
+  
 
 @app.route("/navbar")
 def navbar():

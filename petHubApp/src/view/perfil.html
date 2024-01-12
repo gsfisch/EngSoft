@@ -30,7 +30,19 @@
 							{% endwith %}
 						</h5>	
 					</div>
-					<a href="/logout" class="btn btn-primary">Logout</a>
+					<a href="/logout" class="btn btn-light">Logout</a>
+					<div class="text-center">
+						<a data-toggle="modal" data-target="#myModal" class="link-opacity-100 flash_alerta" >Excluir conta</a>
+					</div>
+					{% with error_message_delete_account = get_flashed_messages(category_filter='error_message_delete_account') %}
+						{% if error_message_delete_account %}
+							{% for message in error_message_delete_account %}
+							<div class="flash_alerta text-center">
+								{{ message }}
+							</div>
+							{% endfor %}
+						{% endif %}
+					{% endwith %}
 				</div>
 			</div>
 		</div>
@@ -39,5 +51,21 @@
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+	<!-- Modal -->
+	<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="exampleModalLabel">Você tem certeza que deseja excluir sua conta?</h5>
+				</div>
+				<div class="modal-footer">
+					<a href="/excluirConta" class="btn btn-danger">Excluir conta</a>
+					<!-- <button  type="button" class="btn btn-secondary" data-dismiss="modal">Deletar conta</button> -->
+					<button type="button"  data-dismiss="modal" aria-label="Close" class="btn btn-secondary">Cancelar</button>
+				  </div>
+			</div>
+		</div>
+	</div>
+
 </body>
 </html>

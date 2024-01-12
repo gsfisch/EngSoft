@@ -17,25 +17,67 @@
         <div class="col-md-5">
             <div class="card mt-2">
                 <div class="card-body">
-                    <h5 class="card-title text-center ">Minha Loja {{nome_da_loja}}</h5>
+                    <h5 class="card-title text-center">Minha loja
+                        {% with user_name = get_flashed_messages(category_filter='user_name') %}
+                            {% if user_name %}
+                                {% for message in user_name %}
+                                <span class="card-title text-center">
+                                    {{ message }}
+                                </span>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+                    </h5>	
                         <div class="container-fluid h-100">
                             <div class="row h-100 justify-content-center align-items-center" style="margin-top: 20px;">
-                                <!-- <div class="card" style="margin-bottom: 10px;">
+                                <div class="card" style="margin-bottom: 10px;">
                                     <div class="card-body">
-                                        <h5 class="card-title">Minha Petshop</h5>
-                                        <p class="card-text">Aqui você consegue cadastrar novos produtos e serviços da sua petshop.</p>
-                                        <a href="#" class="btn btn-primary">Ver minha loja</a>
+                                        <h5 class="card-title">Cadastrar novos produtos</h5>
+                                        <p class="card-text">Aqui você consegue cadastrar novos produtos oferecidos pela sua petshop.</p>
+                                        <a href="#" class="btn btn-primary">Cadastrar produtos</a>
                                     </div>
                                 </div>
                                 <div class="card">
                                     <div class="card-body">
-                                        <h5 class="card-title">Cadastrar minha petshop</h5>
-                                        <p class="card-text">Comece a oferecer seus produtos e serviços na nossa plataforma!</p>
-                                        <a href="#" class="btn btn-primary">Cadastrar Loja</a>
+                                        <h5 class="card-title">Cadastrar novos serviços oferecidos</h5>
+                                        <p class="card-text">Aqui você consegue cadastrar novos serviçoes oferecidos pela sua petshop.</p>
+                                        <a href="#" class="btn btn-primary">Cadastrar serviços</a>
                                     </div>
-                                </div> -->
+                                </div>
                             </div>
                         </div>
+                    </div>
+                    <a href="/logout" class="btn btn-light">Logout</a>
+					<div class="text-center">
+						<a data-toggle="modal" data-target="#myModal" class="link-opacity-100 flash_alerta">Excluir conta</a>
+					</div>
+					{% with error_message_delete_account = get_flashed_messages(category_filter='error_message_delete_account') %}
+						{% if error_message_delete_account %}
+							{% for message in error_message_delete_account %}
+							<div class="flash_alerta text-center">
+								{{ message }}
+							</div>
+							{% endfor %}
+						{% endif %}
+					{% endwith %}
+                </div>
+            </div>
+        </div>
+        <!-- Bootstrap JS (Popper.js and jQuery are required for Bootstrap's JavaScript components) -->
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+        <!-- Modal -->
+        <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Você tem certeza que deseja excluir sua conta?</h5>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="/excluirConta" class="btn btn-danger">Excluir conta</a>
+                        <!-- <button  type="button" class="btn btn-secondary" data-dismiss="modal">Deletar conta</button> -->
+                        <button type="button"  data-dismiss="modal" aria-label="Close" class="btn btn-secondary">Cancelar</button>
                     </div>
                 </div>
             </div>
