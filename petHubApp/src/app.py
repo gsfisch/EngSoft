@@ -94,13 +94,16 @@ def login():
                 # Get the hexadecimal representation of the hash
                 hashed_password = sha1.hexdigest()
             
-                if loginUser['userPassword'] == hashed_password:
-                    session['user'] = loginUser['userName']
+                if loginUser["userPassword"] == hashed_password:
+                    session["user"] = loginUser["userName"]
                     session["documentNumber"] = document_number_formatted
                     session["userType"] = "pessoaJuridica" if len(document_number_formatted) > 11 else "pessoaFisica"
                     if(session["userType"] == "pessoaJuridica"):
+                        session["onSaleProducts"] = loginUser["onSaleProducts"]
                         return redirect("/minhaLoja")
                     elif(session["userType"] == "pessoaFisica"):
+                        session["userCart"] = loginUser["userCart"]
+                        session["userHistory"] = loginUser["userHistory"]
                         return redirect("/user")
                     # vai ter o login de administrador também
                 else:
@@ -165,18 +168,45 @@ def cadastrarUsuario(tipoCadastro, password, password_confirmation, document_for
 
         # Get the hexadecimal representation of the hash
         hashed_password = sha1.hexdigest()
-        
-        #Database Directive
-        users.child(document_formatted).set(
-            {
-                'uid': uid,
-                'userName': name,
-                'userPassword':  hashed_password,
-                'userEmail': email,
-                # 'profilePicture': profilePicture
+
+        if(tipoCadastro == "pessoaFisica"):
+            products = {}
+            userCart = {
+                "products": products,
+                "numberOfProducts": len(products), 
             }
-        )
-        return redirect('/login')
+
+            completedPurchases = {}
+            userHistory = {
+                "completedPurchases": len(completedPurchases)
+            }
+            users.child(document_formatted).set(
+                {
+                    "uid": uid,
+                    "userName": name,
+                    "userPassword": hashed_password,
+                    "userEmail": email,
+                    "userCart": userCart,
+                    "userHistory": userHistory
+                }
+            )
+
+        elif(tipoCadastro == 'pessoaJuridica'):
+            products = {}
+            onSaleProducts = {
+                'products': products,
+                'numberOfProducts': len(products), 
+            }
+            users.child(document_formatted).set(
+                {
+                    'uid': uid,
+                    'userName': name,
+                    'userPassword': hashed_password,
+                    'userEmail': email,
+                    'onSaleProducts': onSaleProducts
+                }
+            )        
+    return redirect('/login')
 
 @app.route("/cadastro", methods =['POST', 'GET'])
 def cadastro():
@@ -237,6 +267,35 @@ def cadastroLoja():
         return cadastrarUsuario("pessoaJuridica", password, password_confirmation, document_formatted, name, email, uid)
     else:
         return render_template('cadastroLoja.html')
+
+def checkUserPermissions(renderTemplate):
+    if(session["userType"] == "pessoaJuridica"):
+        flash("Você não tem acesso a esta sessão já logado como pessoa jurídica.", "unauthorized_user_message")
+        return render_template(renderTemplate) 
+    elif(session["userType"] == "pessoaFisica"):
+        flash("Você não tem acesso a esta sessão logado como pessoa física.", "unauthorized_user_message")
+        return render_template(renderTemplate) 
+
+
+@app.route("/meuCarrinho", methods =['GET'])
+def meuCarrinho():
+    if(session["userCart"]["numberOfProducts"] == 0):
+        flash("Carrinho vazio.", "empty_cart_message")
+    return render_template("/meuCarrinho.html") 
+        
+
+@app.route("/meuHistorico", methods =['GET'])
+def meuHistorico():
+        if(session["userHistory"]["completedPurchases"] == 0):
+            flash("Nenhuma compra efetuada.", "empty_history_message")
+        return render_template("/meuHistorico.html")
+
+@app.route("/meusProdutosEServicos", methods =['GET'])
+def meusProdutosEservicos():
+        if(session["onSaleProducts"]["numberOfProducts"] == 0):
+            flash("Nenhum produto ou serviço cadastrados.", "empty_store_message")
+        return render_template("/meusProdutosEServicos.html")
+    
     
 @app.route("/logout", methods =['GET'])
 def logout():
@@ -255,9 +314,7 @@ def deletarConta():
             return render_template("/minhaLoja.html")
          elif(session["userType"] == "pessoaFisica"):
             return render_template("/perfil.html")
-        
-
-
+    
 @app.route("/navbar")
 def navbar():
     return render_template("/navbar.html")
