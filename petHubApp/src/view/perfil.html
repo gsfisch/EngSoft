@@ -15,8 +15,8 @@
 	{% include 'navbar.html' %} <!-- Inclui a barra de navegação -->
     <div class="container-fluid h-100">
 		<div class="row h-100 justify-content-center align-items-center" style="margin-top: 100px;">
-			<div class="col-md-4">
-				<div class="card mt-3">
+			<div class="col-md-5">
+				<div class="card mt-2">
 					<div class="card-body">
 						<h5 class="card-title text-center">Bem vindo usuário
 							{% with user_name = get_flashed_messages(category_filter='user_name') %}
@@ -28,7 +28,65 @@
 									{% endfor %}
 								{% endif %}
 							{% endwith %}
-						</h5>	
+						</h5>
+						<div class="container-fluid h-100">
+							<div
+								class="row h-100 justify-content-center align-items-center"
+								style="margin-top: 20px"
+							>
+								<div class="card">
+								<div class="card-body">
+									<div class="d-flex align-items-center">
+									<img
+										alt="petshop"
+										class="d-block"
+										style="width: 100px; height: auto; margin-right: 10px"
+										src="{{ url_for('static', filename='img/carrinho-carrinho.png') }}"
+									/>
+									<div>
+										<h5 class="card-title">Meu Carrinho</h5>
+										<p class="card-text">
+										Aqui você consegue ver os produtos adicionados ao seu carrinho.
+										</p>
+										<a href="/meuCarrinho" class="btn btn-primary card-login"
+										>Ver meu carrinho</a
+										>
+									</div>
+									</div>
+								</div>
+								</div>
+								<div class="card mt-2">
+								<div class="card-body">
+									<div class="d-flex align-items-center">
+									<img
+										alt="petshop"
+										class="d-block"
+										style="width: 100px; height: auto; margin-right: 10px"
+										src="{{ url_for('static', filename='img/historico-de-pedidos.png') }}"
+									/>
+									<div>
+										<h5 class="card-title">Histórico de compras</h5>
+										<p class="card-text">
+										Aqui você tem acesso ao seu histórico de compras na nossa loja.
+										</p>
+										<a href="/meuHistorico" class="btn btn-primary card-login"
+										>Ver meu histórico</a
+										>
+									</div>
+									</div>
+								</div>
+								</div>
+							</div>
+						</div>
+						{% with unauthorized_user_message = get_flashed_messages(category_filter='unauthorized_user_message') %}
+							{% if unauthorized_user_message %}
+								{% for message in unauthorized_user_message %}
+								<div class="flash_alerta">
+								{{ message }}
+								</div>
+								{% endfor %}
+							{% endif %}
+						{% endwith %}
 					</div>
 					<a href="/logout" class="btn btn-light">Logout</a>
 					<div class="text-center">
