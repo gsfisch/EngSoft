@@ -6,7 +6,7 @@ import uuid
 import hashlib
 from pprint import pprint
 import firebase_admin
-from firebase_admin import auth, db, credentials
+from firebase_admin import auth, db, credentials, firestore
 from pycpfcnpj import cpfcnpj
 
 
@@ -44,6 +44,27 @@ firebase_admin.initialize_app(cred , {"databaseURL": "https://pet-hub-rs-default
 # creating reference to root node
 ref = db.reference("/")
 users = db.reference("/users")
+
+# função para receber os nomes das lojas e fazer a requisição de produtos
+def consultar_Lojas():
+    currentUser = users.get()
+    listOfProducts = []
+    if currentUser is not None:
+    # Itera sobre cada usuário
+        for user_key, user_data in currentUser.items():
+            # Verifica se o usuário tem o nó 'onSaleProducts'
+            if 'onSaleProducts' in user_data:
+                if user_data['onSaleProducts'] is not None:
+                    on_sale_products = user_data['onSaleProducts']
+                    if 'products' in on_sale_products:
+                        products = on_sale_products['products']
+                # Itera sobre cada produto em 'onSaleProducts'
+                        for product_key, product_data in products.items():
+                            # Verifica se o produto tem o campo 'nome'
+                            listOfProducts.append(product_data)
+                            print(listOfProducts)
+        return listOfProducts
+
 
 
 @app.route("/", methods =['POST', 'GET'])
@@ -314,6 +335,17 @@ def deletarConta():
             return render_template("/minhaLoja.html")
          elif(session["userType"] == "pessoaFisica"):
             return render_template("/perfil.html")
+         
+@app.route("/produtos")
+def produto():
+    if request.method == 'GET':
+            if "user" not in session:
+                return redirect("/")
+            if (session["userType"] == "pessoaJuridica"):
+                return redirect("/")
+            else:
+                consultar_Lojas()
+                return render_template("/produtos.html")
     
 @app.route("/navbar")
 def navbar():
