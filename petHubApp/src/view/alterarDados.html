@@ -18,24 +18,24 @@
 			<div class="col-md-4">
 				<div class="card mt-3">
 					<div class="card-body">
-						<h5 class="card-title text-center">Cadastre-se</h5>
+						<h5 class="card-title text-center">Alterar dados cadastrais</h5>
 						
 						<!-- Formulário de Login -->
-						<form method="post" action="cadastro">
+						<form method="post" action="alterarDados">
 							<!-- Campo de Usuário -->
 							<div class="form-group mb-1">
 								<label for="display_name">Nome:</label>
-								<input type="text" class="form-control" name="nome" id="display_name" placeholder="Digite seu nome completo">
+								<input type="text" class="form-control" name="nome" id="display_name" value= "{{user_name}}">
 							</div>
 							
 							<!-- Campo de Email -->
 							<div class="form-group mb-3">
 								<label for="email">Email:</label>
-								<input type="email" class="form-control" name="email" id="email" placeholder="Digite seu e-mail">
+								<input type="email" class="form-control" name="email" id="email" value="{{email}}">
 							</div>
 							<div class="form-group mb-3">
-								<label for="cpfOuCnpj">Informe seu CPF:</label>
-								<input type="text" data-mask="000.000.000-00" placeholder="000.000.000-00" id="cpf" name="cpf" class="form-control" />
+								<label for="cpfOuCnpj">{% if is_juridica %}CNPJ{% else %}CPF{% endif %}:</label>
+								<input type="text" data-mask="{{mask}}"  value="{{document_number}}" id="cpf" name="cpf" class="form-control" disabled/>
 								{% with invalid_document_message = get_flashed_messages(category_filter='invalid_document_message') %}
 									{% if invalid_document_message %}
 										{% for message in invalid_document_message %}
@@ -46,9 +46,9 @@
 									{% endif %}
 								{% endwith %}
 							</div>
-							<!-- Campo de Senha -->
+							<!-- Campo de Nova Senha -->
 							<div class="form-group mb-1">
-								<label for="password">Senha:</label>
+								<label for="password">Nova Senha:</label>
 								<input type="password" class="form-control" name="password1" id="password1" placeholder="Digite sua senha">
 							</div>
 
@@ -85,11 +85,16 @@
 							<!-- Botão de Login -->
 							<div class="text-center">
                                 <p>
-                                <button type="submit" class="btn btn-primary card-login">Cadastrar</button>
-							</div>
-
-							<div class="text-center">
-                                <p>Já tem uma conta? <a class="link-opacity-100" href="/login">Fazer Login</a></p>
+                                <button type="submit" class="btn btn-primary card-login">Alterar</button>
+								{% with bad_request_user_message_no_changes = get_flashed_messages(category_filter='bad_request_user_message_no_changes') %}
+									{% if bad_request_user_message_no_changes %}
+										{% for message in bad_request_user_message_no_changes %}
+										<div class="flash_alerta">
+											{{ message }}
+										</div>
+										{% endfor %}
+									{% endif %}
+								{% endwith %}
 							</div>
 						</form>
 					</div>
