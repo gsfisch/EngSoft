@@ -192,7 +192,7 @@ def cadastrarUsuario(tipoCadastro, password, password_confirmation, document_for
             )
 
         elif(tipoCadastro == 'pessoaJuridica'):
-            products = {}
+            products = { 'name': 'oi'}
             onSaleProducts = {
                 'products': products,
                 'numberOfProducts': len(products), 
@@ -318,5 +318,45 @@ def deletarConta():
 @app.route("/navbar")
 def navbar():
     return render_template("/navbar.html")
+
+@app.route("/cadastrarProduto", methods =['GET', 'POST'])
+def cadastrarProduto():
+    if request.method == 'GET':
+        if "user" not in session:
+            return redirect("/")
+        if (session["userType"] == "pessoaFisica"):
+            return redirect("/")
+
+        else:
+            return render_template("/cadastrarProduto.html")
+
+    elif request.method == 'POST':
+        productTitle = request.form.get('tituloProduto')
+        productDescription = request.form.get('descricaoProduto')
+        productPrice = request.form.get('precoProduto')
+
+        product = {
+            'title': productTitle,
+            'price': productPrice,
+            'description': productDescription
+        }
+
+
+        loginUser = users.child(session["documentNumber"]).get()
+
+        #loginUser.update( 'onSaleProducts':  )
+
+        print( loginUser )
+#.get('onSaleProducts')
+        # ["onSaleProducts"]
+
+
+#        new_user_ref = users_ref.push()
+#        new_user_ref.set({
+#            'name': name,
+#            'email': email
+#        })
+
+        return render_template("/cadastrarProduto.html")
 
 
