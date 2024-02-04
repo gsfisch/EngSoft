@@ -27,13 +27,13 @@
                 <div class="card-body">
 
                     <form action="/editarProduto" method="post" class="row  justify-content-center align-items-center" style="margin-top: 30px; margin-bottom: 30px">
-                        <label class="card-title" style="padding-top: -10px;"> <h4>{{product[0] }} </h4></label>
+                        <label class="card-title" style="padding-top: -10px;"> <h4>{{product[1]['title'] }} </h4></label>
                         
                         <label name="precoProduto"> <p>R${{product[1]['price']}} </p></label>
 
                         <label name="descricaoProduto"> <p>{{product[1]['description']}} </p></label>
-                             
-                        <input type="hidden" name="tituloProduto" value="{{ product[0] }}" >
+                        <input type="hidden" name="chaveProduto" value="{{ product[0] }}" >    
+                        <input type="hidden" name="tituloProduto" value="{{ product[1]['title'] }}" >
                         <input type="hidden" name="precoProduto" value="{{ product[1]['price'] }}" >
                         <input type="hidden" name="descricaoProduto" value="{{ product[1]['description'] }}" >
                         
