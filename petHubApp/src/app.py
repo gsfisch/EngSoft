@@ -359,6 +359,7 @@ def cadastrarProduto():
 
 @app.route("/editarProduto", methods=['GET', 'POST'])
 def editarProduto():
+    # Checagem de permissão
     if request.method == 'GET':
         if "user" not in session:
             return redirect("/")
@@ -372,7 +373,12 @@ def editarProduto():
 
             numberOfProducts = onSaleProducts.get('numberOfProducts')
             products = onSaleProducts.get('products') 
-            productsList = list( products.items() )
+            productsList = ()
+
+            if products:
+                productsList = list( products.items() )
+
+                
 
             #print (numberOfProducts)
             #print (products)
@@ -389,12 +395,34 @@ def editarProduto():
                                     numberOfProducts = numberOfProducts,
                                     productsList = productsList)
 
+
+    # Edit or Delete products / service
     elif request.method == 'POST':
         productTitle = request.form.get('tituloProduto')
+        productPrice = request.form.get('precoProduto')
+        productDescription = request.form.get('descricaoProduto')
+
         print(productTitle)
+        print(productPrice)
+        print(productDescription)
+
+        product = {
+            'title': productTitle,
+            'price': productPrice,
+            'description': productDescription
+        }
 
         if request.form.get('Action') == "Editar":
             print('Editar')
+
+            #return alterarProduto(product)
+            print (product)
+            #flash(product, 'product')
+            session['product'] = product
+
+            print(session['product'])
+
+            return redirect('/alterarProduto')
         
         elif request.form.get('Action') == "Deletar":
             print('Deletar')
@@ -407,5 +435,40 @@ def editarProduto():
             return redirect('/editarProduto')
 
 
-def deleteProduct(onSaleProductsRef, productName):
-    onSaleProductsRef.child('products').child(productName).delete()
+@app.route("/alterarProduto", methods=['GET', 'POST'])
+def alterarProduto():
+    # Checagem de permissão
+    if "user" not in session:
+            return redirect("/")
+    if (session["userType"] == "pessoaFisica"):
+            return redirect("/")
+    
+    product = session.pop('product', None)
+    print (product)
+    print('Aquuuuuuuuuuuuuuuuuiiii')
+
+    if request.method == 'POST':
+        
+        productTitle = request.form.get('tituloProduto')
+        productPrice = request.form.get('precoProduto')
+        productDescription = request.form.get('descricaoProduto')
+
+        print(productTitle)
+        print(productPrice)
+        print(productDescription)
+
+        if (product['title'] == productTitle or product['description'] == productDescription or product['price'] == productPrice):
+            users.child(session['documentNumber']).child('onSaleProducts').child('products').child(productTitle).update( { 'description': productDescription,'title': productTitle, 'price': productPrice} )
+
+        print (users.child(session['documentNumber']).child('onSaleProducts').child('products').child(productTitle).get())
+        
+        #product = {
+        #    'title': productTitle,
+        #    'price': productPrice,
+        #    'description': productDescription
+        #}
+
+        return render_template("editarProduto.html") #return redirect("/editarProduto")
+
+    else:
+        return render_template("alterarProduto.html", product=product)
