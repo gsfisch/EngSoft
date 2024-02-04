@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<meta content="IE=edge" http-equiv="X-UA-Compatible">
-	<meta content="width=device-width, initial-scale=1.0" name="viewport">
-	<title>PetHub RS</title>
-	<!-- All CSS -->
+    <meta charset="UTF-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>PetHub RS</title>
+    <!-- All CSS -->
     <link href="{{ url_for('static', filename='css/bootstrap.min.css')}}" rel="stylesheet">
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" >
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <link href="{{ url_for('static', filename='css/style.css')}}" rel="stylesheet">
 </head>
 <body>
-	{% include 'navbar.html' %} <!-- Inclui a barra de navegação -->
-    <div class="row  justify-content-center" style="margin-top: 100px;">
+    {% include 'navbar.html' %} <!-- Inclui a barra de navegação -->
+    <div class="row justify-content-center" style="margin-top: 100px;">
         <div class="col-md-5">
             <div class="card mt-2">
                 <div class="card-body">
@@ -25,66 +25,59 @@
                 </div>
                 {% for item in lista_de_itens %}
                 <!-- Criando uma "box" para cada item -->
-                <div id="item{{ loop.index }}" style="background-color: #f0f0f0; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px; position: relative; margin-left: 15px; margin-right: 15px;">
+                <div id="item{{ loop.index }}" class="position-relative item-box" style="background-color: #f0f0f0; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px; position: relative; margin-left: 15px; margin-right: 15px;">
                     <p>Título: {{ item['title'] }}</p>
                     <p>Descrição: {{ item['description'] }}</p>
                     <p>Preço: R$ {{ item['price'] }}</p>
-                    <!-- Botão "Informações do Produto" ao lado de Adicionar carrinho -->
-                    <button style="position: absolute; bottom: 5px; right: 200px; border-radius: 10px; padding: 5px 10px; background-color: #004e2c; color: white; border: none; cursor: pointer; margin-left: 10px;" onclick="exibirInformacoes({{ loop.index }})">Informações do Produto</button>
                     <!-- Botão "Adicionar ao Carrinho" no canto inferior direito -->
-                    <button style="position: absolute; bottom: 5px; right: 5px; border-radius: 10px; padding: 5px 10px; background-color: #004e2c; color: white; border: none; cursor: pointer;">Adicionar ao Carrinho</button>
+                    <button class="btn btn-success btn-sm adicionar-ao-carrinho" style="position: absolute; bottom: 5px; right: 5px; border-radius: 10px; padding: 5px 10px; background-color: #004e2c; color: white; border: none; cursor: pointer; z-index: 1;">Adicionar ao Carrinho</button>
+                    <!-- Botão "Informações do Produto" ao lado de Adicionar carrinho -->
+                    <button class="btn btn-success btn-sm exibir-informacoes" data-toggle="modal" data-target="#informacoesDetalhadas{{ loop.index }}" data-titulo="{{ item['title'] }}" data-descricao="{{ item['description'] }}" data-preco="{{ item['price'] }}" style="position: absolute; bottom: 5px; right: 180px; border-radius: 10px; padding: 5px 10px; background-color: #004e2c; color: white; border: none; cursor: pointer; z-index: 1;">Informações do Produto</button>
+                </div>
+                <!-- Área para exibir informações detalhadas do produto -->
+                <div class="modal fade" id="informacoesDetalhadas{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="informacoesDetalhadasLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="informacoesDetalhadasLabel">Informações do Produto</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p><strong>Título:</strong> <span id="modalTitulo{{ loop.index }}"></span></p>
+                                <p><strong>Descrição:</strong> <span id="modalDescricao{{ loop.index }}"></span></p>
+                                <p><strong>Preço:</strong> R$ <span id="modalPreco{{ loop.index }}"></span></p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 {% endfor %}
-                    <!-- Área para exibir informações detalhadas do produto -->
-                <div id="informacoesDetalhadas" style="display: none; border: 1px solid #ccc; padding: 10px; margin-top: 20px;">
-                    <!-- As informações detalhadas do produto serão exibidas aqui -->
-                </div>
-
-                <script>
-                    function exibirInformacoes(id) {
-                        // Obtém os dados do item com base no ID
-                        var item = {
-                            titulo: document.getElementById('item' + id).querySelector('p:nth-child(1)').textContent,
-                            descricao: document.getElementById('item' + id).querySelector('p:nth-child(2)').textContent,
-                            preco: document.getElementById('item' + id).querySelector('p:nth-child(3)').textContent
-                        };
-
-                        // Exibe as informações detalhadas do produto
-                        document.getElementById('informacoesDetalhadas').innerHTML = '' + item.titulo + '<br>' + item.descricao + '<br>' + item.preco;
-                        document.getElementById('informacoesDetalhadas').style.display = 'block';
-                    }
-                </script>
-            </div>
-        </div> 
-        <!-- Bootstrap JS (Popper.js and jQuery are required for Bootstrap's JavaScript components) -->
-        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-        <!-- Modal -->
-        <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Você tem certeza que deseja excluir sua conta?</h5>
-                    </div>
-                    <div class="modal-footer">
-                        <a href="/excluirConta" class="btn btn-danger">Excluir conta</a>
-                        <!-- <button  type="button" class="btn btn-secondary" data-dismiss="modal">Deletar conta</button> -->
-                        <button type="button"  data-dismiss="modal" aria-label="Close" class="btn btn-secondary">Cancelar</button>
-                    </div>
-                        <h1>Produtos</h1>
-    <!-- Iterando sobre a lista de itens -->
-    {% for item in lista_de_itens %}
-        <!-- Criando uma "box" para cada item -->
-        <div class="box">
-            <p>{{ item }}</p>
-        </div>
-    {% endfor %}
-                </div>
             </div>
         </div>
     </div>
-    </body>
-</html>
-                        
+    <!-- Bootstrap JS (Popper.js and jQuery are required for Bootstrap's JavaScript components) -->
+       <!-- Bootstrap JS (Popper.js and jQuery are required for Bootstrap's JavaScript components) -->
+       <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+       <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
    
+       <script>
+           $(document).ready(function () {
+               // Manipula o clique nos botões "Informações do Produto"
+               $('.exibir-informacoes').click(function () {
+                   var index = $(this).closest('div').attr('id').replace('item', '');
+                   var titulo = $(this).data('titulo');
+                   var descricao = $(this).data('descricao');
+                   var preco = $(this).data('preco');
+   
+                   // Atualize os elementos do modal com as informações
+                   $('#modalTitulo' + index).text(titulo);
+                   $('#modalDescricao' + index).text(descricao);
+                   $('#modalPreco' + index).text(preco);
+   
+                   // Exibe o modal
+                   $('#informacoesDetalhadas' + index).modal('show');
+               });
+           });
+       </script>
+   </body>
+   </html>
