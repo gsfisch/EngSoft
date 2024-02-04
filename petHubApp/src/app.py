@@ -55,21 +55,7 @@ def get_stores():
                 store = []
                 store.append(user_key)
                 store.append(user_data)
-                print(user_key)
-                print(user_data)
                 listOfStores.append(store)
-                print(listOfStores)
-            # Verifica se o usuário tem o nó 'onSaleProducts'
-            # if 'onSaleProducts' in user_data:
-            #     if user_data['onSaleProducts'] is not None:
-            #         on_sale_products = user_data['onSaleProducts']
-            #         if 'products' in on_sale_products:
-            #             products = on_sale_products['products']
-            #     # Itera sobre cada produto em 'onSaleProducts'
-            #             for product_key, product_data in products.items():
-            #                 # Verifica se o produto tem o campo 'nome'
-            #                 listOfProducts.append(product_data)
-            #                 print(listOfProducts)
         return listOfStores
 
 
