@@ -192,7 +192,7 @@ def cadastrarUsuario(tipoCadastro, password, password_confirmation, document_for
             )
 
         elif(tipoCadastro == 'pessoaJuridica'):
-            products = { 'name': 'oi'}
+            products = {}
             onSaleProducts = {
                 'products': products,
                 'numberOfProducts': len(products), 
@@ -205,7 +205,7 @@ def cadastrarUsuario(tipoCadastro, password, password_confirmation, document_for
                     'userEmail': email,
                     'onSaleProducts': onSaleProducts
                 }
-            )        
+            )     
     return redirect('/login')
 
 @app.route("/cadastro", methods =['POST', 'GET'])
@@ -335,28 +335,77 @@ def cadastrarProduto():
         productDescription = request.form.get('descricaoProduto')
         productPrice = request.form.get('precoProduto')
 
+
         product = {
-            'title': productTitle,
             'price': productPrice,
-            'description': productDescription
+            'description': productDescription,
+            'title': productTitle
         }
 
+        onsale_products = users.child(f'{session["documentNumber"]}/onSaleProducts')
 
-        loginUser = users.child(session["documentNumber"]).get()
+        # Adiciona o produto
+        onsale_products.child('products').child(productTitle).set(product)
 
-        #loginUser.update( 'onSaleProducts':  )
-
-        print( loginUser )
-#.get('onSaleProducts')
-        # ["onSaleProducts"]
+        #newQuantity = onsale_products.child('numberOfProducts').get() + 1
 
 
-#        new_user_ref = users_ref.push()
-#        new_user_ref.set({
-#            'name': name,
-#            'email': email
-#        })
+        #onsale_products.update( {'numberOfProducts': newQuantity} )
+
+        #print( onsale_products.child('numberOfProducts').get() + 1)
 
         return render_template("/cadastrarProduto.html")
 
 
+@app.route("/editarProduto", methods=['GET', 'POST'])
+def editarProduto():
+    if request.method == 'GET':
+        if "user" not in session:
+            return redirect("/")
+        if (session["userType"] == "pessoaFisica"):
+            return redirect("/")
+
+        else:
+            onSaleProducts = users.child(session['documentNumber']).child('onSaleProducts').get()
+            onSaleProductsRef = users.child(session['documentNumber']).child('onSaleProducts')
+            #print (onSaleProducts)
+
+            numberOfProducts = onSaleProducts.get('numberOfProducts')
+            products = onSaleProducts.get('products') 
+            productsList = list( products.items() )
+
+            #print (numberOfProducts)
+            #print (products)
+            #print(productsList)
+
+            #deleteProduct(users.child(session['documentNumber']).child('onSaleProducts'), 'oi')
+
+            
+
+            #print( onSaleProducts)
+
+            return render_template("editarProduto.html",
+                                    onSaleProducts = onSaleProducts,
+                                    numberOfProducts = numberOfProducts,
+                                    productsList = productsList)
+
+    elif request.method == 'POST':
+        productTitle = request.form.get('tituloProduto')
+        print(productTitle)
+
+        if request.form.get('Action') == "Editar":
+            print('Editar')
+        
+        elif request.form.get('Action') == "Deletar":
+            print('Deletar')
+
+            # Delets product / service
+            users.child(session['documentNumber']).child('onSaleProducts').child('products').child(productTitle).delete()
+            #actualQuantity = users.child(session['documentNumber']).child('onSaleProducts').child('numberOfProducts').get()
+            #users.child(session['documentNumber']).child('onSaleProducts').set({'numberOfproducts': actualQuantity - 1})
+
+            return redirect('/editarProduto')
+
+
+def deleteProduct(onSaleProductsRef, productName):
+    onSaleProductsRef.child('products').child(productName).delete()
