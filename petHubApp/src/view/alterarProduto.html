@@ -6,10 +6,7 @@
 	<meta content="width=device-width, initial-scale=1.0" name="viewport">
 	<title>PetHub RS</title>
 	<!-- All CSS -->
-    <style>
-        ul {
-            list-style-type: none;
-        }
+
     </style>
     <link href="{{ url_for('static', filename='css/bootstrap.min.css')}}" rel="stylesheet">
 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
@@ -22,29 +19,23 @@
     
     <div class="row  justify-content-center align-items-center" style="margin-top: 100px;">
         <div class="col-md-5">
-            {% for product in productsList %}
+            
             <div class="card mt-2">
                 <div class="card-body">
-
-                    <form action="/editarProduto" method="post" class="row  justify-content-center align-items-center" style="margin-top: 30px; margin-bottom: 30px">
-                        <label class="card-title" style="padding-top: -10px;"> <h4>{{product[0] }} </h4></label>
+                    <form action="/alterarProduto"  method="post" class="row  justify-content-center align-items-center" style="margin-top: 30px; margin-bottom: 30px">
+                        <label for="tituloProduto" style="margin-top: -5px;">Título do Produto:</label>
+                        <input type="text" class="form-control" name="tituloProduto" placeholder="Digite o título do produto." value="{{product['title']}}"><br><br>
                         
-                        <label name="precoProduto"> <p>R${{product[1]['price']}} </p></label>
+                        <label for="precoProduto" style="margin-top: -5px;">Preço do Produto:</label>
+                        <input type="number" class="form-control" name="precoProduto" placeholder="Digite o preço do produto." value="{{product['price']}}"><br><br>
 
-                        <label name="descricaoProduto"> <p>{{product[1]['description']}} </p></label>
-                             
-                        <input type="hidden" name="tituloProduto" value="{{ product[0] }}" >
-                        <input type="hidden" name="precoProduto" value="{{ product[1]['price'] }}" >
-                        <input type="hidden" name="descricaoProduto" value="{{ product[1]['description'] }}" >
+                        <label for="descricaoProduto" style="margin-top: 15px;">Descrição:</label>
+                        <input type="text" class="form-control" id="adicionarProdutoDescricao" name="descricaoProduto" style="padding: 50px; margin-bottom: 50px;" placeholder="Digite a descrição do produto." value="{{product['title']}}"><br><br>
                         
-                        <ul list-style-type='none';>
-                            <input type="submit" name="Action" class="btn btn-primary" value="Editar">
-                            <input type="submit" name="Action" class="btn btn-primary bg-red" style="background-color: rgb(236, 49, 49);" value="Deletar">
-                        </ul>
+                        <input type="submit" class="btn btn-primary" value="Editar produto">
                     </form>
                 </div>
             </div>
-            {% endfor %}
         </div>
     </div>
     
