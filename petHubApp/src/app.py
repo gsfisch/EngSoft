@@ -45,6 +45,33 @@ firebase_admin.initialize_app(cred , {"databaseURL": "https://pet-hub-rs-default
 ref = db.reference("/")
 users = db.reference("/users")
 
+def get_stores():
+    all_users = users.get()
+    listOfStores = []
+    if all_users is not None:
+    # Itera sobre cada usuário
+        for user_key, user_data in all_users.items():
+            if 'onSaleProducts' in user_data:
+                store = []
+                store.append(user_key)
+                store.append(user_data)
+                print(user_key)
+                print(user_data)
+                listOfStores.append(store)
+                print(listOfStores)
+            # Verifica se o usuário tem o nó 'onSaleProducts'
+            # if 'onSaleProducts' in user_data:
+            #     if user_data['onSaleProducts'] is not None:
+            #         on_sale_products = user_data['onSaleProducts']
+            #         if 'products' in on_sale_products:
+            #             products = on_sale_products['products']
+            #     # Itera sobre cada produto em 'onSaleProducts'
+            #             for product_key, product_data in products.items():
+            #                 # Verifica se o produto tem o campo 'nome'
+            #                 listOfProducts.append(product_data)
+            #                 print(listOfProducts)
+        return listOfStores
+
 
 @app.route("/", methods =['POST', 'GET'])
 def index():
@@ -295,6 +322,17 @@ def meusProdutosEservicos():
         if(session["onSaleProducts"]["numberOfProducts"] == 0):
             flash("Nenhum produto ou serviço cadastrados.", "empty_store_message")
         return render_template("/meusProdutosEServicos.html")
+
+@app.route("/lojas")
+def produto():
+    if request.method == 'GET':
+            if "user" not in session:
+                return redirect("/")
+            if (session["userType"] == "pessoaJuridica"):
+                return redirect("/")
+            else:
+                stores = get_stores()
+                return render_template("/lojas.html", stores_list=stores)
     
     
 @app.route("/logout", methods =['GET'])
