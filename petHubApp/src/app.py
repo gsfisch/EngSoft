@@ -391,8 +391,8 @@ def editarProduto():
             #print( onSaleProducts)
 
             return render_template("editarProduto.html",
-                                    onSaleProducts = onSaleProducts,
-                                    numberOfProducts = numberOfProducts,
+                                    #onSaleProducts = onSaleProducts,
+                                    #numberOfProducts = numberOfProducts,
                                     productsList = productsList)
 
 
@@ -443,9 +443,9 @@ def alterarProduto():
     if (session["userType"] == "pessoaFisica"):
             return redirect("/")
     
-    product = session.pop('product', None)
+    product = session['product']
+    print('produto antigo')
     print (product)
-    print('Aquuuuuuuuuuuuuuuuuiiii')
 
     if request.method == 'POST':
         
@@ -453,9 +453,12 @@ def alterarProduto():
         productPrice = request.form.get('precoProduto')
         productDescription = request.form.get('descricaoProduto')
 
-        print(productTitle)
-        print(productPrice)
-        print(productDescription)
+        #print(productTitle)
+        #print(productPrice)
+        #print(productDescription)
+
+        
+        
 
         if (product['title'] == productTitle or product['description'] == productDescription or product['price'] == productPrice):
             users.child(session['documentNumber']).child('onSaleProducts').child('products').child(productTitle).update( { 'description': productDescription,'title': productTitle, 'price': productPrice} )
@@ -468,7 +471,14 @@ def alterarProduto():
         #    'description': productDescription
         #}
 
-        return render_template("editarProduto.html") #return redirect("/editarProduto")
+        products = users.child(session['documentNumber']).child('onSaleProducts').get('products') 
+        productsList = ()
+        print(products)
+
+        if products:
+            productsList = list( products.items() )
+
+        return render_template("editarProduto.html", productsList = productsList)
 
     else:
         return render_template("alterarProduto.html", product=product)
