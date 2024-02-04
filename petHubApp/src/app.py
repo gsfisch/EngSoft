@@ -344,8 +344,10 @@ def produto():
             if (session["userType"] == "pessoaJuridica"):
                 return redirect("/")
             else:
-                consultar_Lojas()
-                return render_template("/produtos.html")
+                listaProdutos = consultar_Lojas()
+                print(listaProdutos)
+                print(consultar_Lojas())
+                return render_template("/produtos.html", lista_de_itens=listaProdutos)
     
 @app.route("/navbar")
 def navbar():

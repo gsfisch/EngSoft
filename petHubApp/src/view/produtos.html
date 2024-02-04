@@ -23,6 +23,14 @@
                         <button class="btn btn-outline-success ml-2" type="submit">Buscar</button>
                     </form>
                 </div>
+                {% for item in lista_de_itens %}
+                <!-- Criando uma "box" para cada item -->
+                <div style="background-color: #f0f0f0; border: 1px solid #ccc; padding: 5px; margin-bottom: 10px; border-radius: 5px; margin-left: 15px; margin-right: 15px;">
+                    <p>Título: {{ item['title'] }}</p>
+                    <p>Descrição: {{ item['description'] }}</p>
+                    <p>Preço: R$ {{ item['price'] }}</p>
+                </div>
+                {% endfor %}
             </div>
         </div> 
         <!-- Bootstrap JS (Popper.js and jQuery are required for Bootstrap's JavaScript components) -->
@@ -41,6 +49,14 @@
                         <!-- <button  type="button" class="btn btn-secondary" data-dismiss="modal">Deletar conta</button> -->
                         <button type="button"  data-dismiss="modal" aria-label="Close" class="btn btn-secondary">Cancelar</button>
                     </div>
+                        <h1>Produtos</h1>
+    <!-- Iterando sobre a lista de itens -->
+    {% for item in lista_de_itens %}
+        <!-- Criando uma "box" para cada item -->
+        <div class="box">
+            <p>{{ item }}</p>
+        </div>
+    {% endfor %}
                 </div>
             </div>
         </div>
