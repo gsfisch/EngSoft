@@ -345,8 +345,6 @@ def produto():
                 return redirect("/")
             else:
                 listaProdutos = consultar_Lojas()
-                print(listaProdutos)
-                print(consultar_Lojas())
                 return render_template("/produtos.html", lista_de_itens=listaProdutos)
     
 @app.route("/navbar")

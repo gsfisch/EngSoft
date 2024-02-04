@@ -25,12 +25,35 @@
                 </div>
                 {% for item in lista_de_itens %}
                 <!-- Criando uma "box" para cada item -->
-                <div style="background-color: #f0f0f0; border: 1px solid #ccc; padding: 5px; margin-bottom: 10px; border-radius: 5px; margin-left: 15px; margin-right: 15px;">
+                <div id="item{{ loop.index }}" style="background-color: #f0f0f0; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px; position: relative; margin-left: 15px; margin-right: 15px;">
                     <p>Título: {{ item['title'] }}</p>
                     <p>Descrição: {{ item['description'] }}</p>
                     <p>Preço: R$ {{ item['price'] }}</p>
+                    <!-- Botão "Informações do Produto" ao lado de Adicionar carrinho -->
+                    <button style="position: absolute; bottom: 5px; right: 200px; border-radius: 10px; padding: 5px 10px; background-color: #004e2c; color: white; border: none; cursor: pointer; margin-left: 10px;" onclick="exibirInformacoes({{ loop.index }})">Informações do Produto</button>
+                    <!-- Botão "Adicionar ao Carrinho" no canto inferior direito -->
+                    <button style="position: absolute; bottom: 5px; right: 5px; border-radius: 10px; padding: 5px 10px; background-color: #004e2c; color: white; border: none; cursor: pointer;">Adicionar ao Carrinho</button>
                 </div>
                 {% endfor %}
+                    <!-- Área para exibir informações detalhadas do produto -->
+                <div id="informacoesDetalhadas" style="display: none; border: 1px solid #ccc; padding: 10px; margin-top: 20px;">
+                    <!-- As informações detalhadas do produto serão exibidas aqui -->
+                </div>
+
+                <script>
+                    function exibirInformacoes(id) {
+                        // Obtém os dados do item com base no ID
+                        var item = {
+                            titulo: document.getElementById('item' + id).querySelector('p:nth-child(1)').textContent,
+                            descricao: document.getElementById('item' + id).querySelector('p:nth-child(2)').textContent,
+                            preco: document.getElementById('item' + id).querySelector('p:nth-child(3)').textContent
+                        };
+
+                        // Exibe as informações detalhadas do produto
+                        document.getElementById('informacoesDetalhadas').innerHTML = '' + item.titulo + '<br>' + item.descricao + '<br>' + item.preco;
+                        document.getElementById('informacoesDetalhadas').style.display = 'block';
+                    }
+                </script>
             </div>
         </div> 
         <!-- Bootstrap JS (Popper.js and jQuery are required for Bootstrap's JavaScript components) -->
