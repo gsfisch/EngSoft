@@ -13,6 +13,20 @@
 </head>
 <body>
 	{% include 'navbar.html' %} <!-- Inclui a barra de navegação -->
+	{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+      <div
+        class="alert alert-{{ category }} alert-dismissible fade show"
+        role="alert"
+        style="text-align: center; position: fixed; top: 60px; width: 100%; z-index: 1000; background-color: #ddd;"
+      >
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
 	<div class="carousel slide" data-bs-ride="carousel" id="carouselExampleIndicators">
 		<div class="carousel-indicators">
 			<button aria-label="Slide 1" class="active" data-bs-slide-to="0" data-bs-target="#carouselExampleIndicators" type="button"></button> <button aria-label="Slide 2" data-bs-slide-to="1" data-bs-target="#carouselExampleIndicators" type="button"></button> 
@@ -23,7 +37,7 @@
 				<div class="carousel-caption">
 					<h5>O que o seu PET necessita?</h5>
 					<p>PetHubRS é uma central para lojas da região metropolitana de Porto Alegre que oferecem produtos e serviços para todo tipo de animal de estimação.</p>
-					<p><a class="btn carousel-button mt-3" href="#">BUSCAR UMA LOJA</a></p>
+					<p><a class="btn carousel-button mt-3" href="/lojas">BUSCAR UMA LOJA</a></p>
 				</div>
 			</div>
 			<div class="carousel-item">
@@ -31,7 +45,7 @@
 				<div class="carousel-caption">
 					<h5>Trabalha com Pets?</h5>
 					<p>Cadastre aqui seus produtos e serviços disponíveis.</p>
-					<p><a class="btn carousel-button mt-3" href="#">ANUNCIE AQUI</a></p>
+					<p><a class="btn carousel-button mt-3" href="/lojista">ANUNCIE AQUI</a></p>
 				</div>
 			</div>
 
