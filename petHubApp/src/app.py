@@ -361,6 +361,106 @@ def meuHistorico():
         user_history = user_manager.query_history(session['documentNumber'])
         return render_template("/meuHistorico.html", lista_de_pedidos=user_history)
 
+def invalid_password_change(password_encoded, password_confirmation_encoded, password_length):
+    wrong_password = False
+
+    if  password_encoded != password_confirmation_encoded:
+        flash("as senhas escolhidas divergem", "invalid_password_message")
+        wrong_password = True
+    elif password_length < 7:
+        flash("senha inválida: a senha precisa ter no mínimo 6 caracteres", "invalid_password_message")
+        wrong_password = True
+
+    if  wrong_password:
+        return True
+
+def alterarCadastroUsuario(password, password_confirmation, document_formatted,  name, email, must_change_password):
+    password_encoded = password.encode('utf-8')
+    password_confirmation_encoded = password_confirmation.encode('utf-8')
+    password_length = len(password)
+    
+    if must_change_password == True:
+        if invalid_password_change(password_encoded, password_confirmation_encoded, password_length):
+            return redirect('/alterarDados')
+        else:
+            # Create a SHA-1 hash object
+            sha1 = hashlib.sha1()
+
+            # Update the hash object with the encoded password
+            sha1.update(password_encoded)
+
+            # Get the hexadecimal representation of the hash
+            hashed_password = sha1.hexdigest()
+
+        
+            users.child(document_formatted).update(
+                {
+                        "userName": name,
+                        "userEmail": email,
+                        "userPassword": hashed_password
+                }
+            )
+    else:
+        users.child(document_formatted).update(
+                {
+                        "userName": name,
+                        "userEmail": email,
+                }
+            )
+    session.pop("user")
+    return redirect("/")
+
+@app.route("/alterarDados", methods=["GET", "POST"])
+def alterarDados():
+    must_change_name = False
+    must_change_email = False
+    must_change_password = False
+
+    if request.method == 'POST': 
+        email = request.form.get('email')
+        name = request.form.get('nome')
+        password = request.form.get('password1')
+        password_confirmation = request.form.get('password2')
+
+        if('user' in session):
+            if session["email"] != email:
+                must_change_email = True
+
+            if session["user"] != name:
+                must_change_name = True
+
+            if password is not None and password != '':
+                must_change_password = True
+
+            document_formatted = session["documentNumber"]
+
+        if must_change_name or must_change_email or must_change_password:  
+            return alterarCadastroUsuario(password, password_confirmation, document_formatted, name, email, must_change_password)
+        else:
+            if('user' in session):
+                if(session["userType"] == "pessoaJuridica"):
+                    is_juridica = True
+                    mask = "00.000.000/0000-00"
+                    flash("Você não realizou nenhuma alteração.", "bad_request_user_message_no_changes")
+                    return render_template("/alterarDados.html", is_juridica=is_juridica, mask=mask, user_name=session["user"], document_number=session["documentNumber"], email=session["email"], user_type = session["userType"])
+                elif(session["userType"] == "pessoaFisica"):
+                    is_juridica = False
+                    mask = "000.000.000-00"
+                    flash("Você não realizou nenhuma alteração.",  "bad_request_user_message_no_changes")
+                    return render_template("/alterarDados.html", is_juridica=is_juridica, mask=mask, user_name=session["user"], document_number=session["documentNumber"], email=session["email"], user_type = session["userType"])
+
+    else:
+        if('user' in session):
+            if(session["userType"] == "pessoaJuridica"):
+                is_juridica = True
+                mask = "00.000.000/0000-00"
+                return render_template("/alterarDados.html", is_juridica=is_juridica, mask=mask, user_name=session["user"], document_number=session["documentNumber"], email=session["email"], user_type = session["userType"])
+            elif(session["userType"] == "pessoaFisica"):
+                is_juridica = False
+                mask = "000.000.000-00"
+                return render_template("/alterarDados.html", is_juridica=is_juridica, mask=mask, user_name=session["user"], document_number=session["documentNumber"], email=session["email"], user_type = session["userType"])
+
+
 @app.route("/lojista")
 def lojista():
     return render_template("/lojistaMenu.html")
