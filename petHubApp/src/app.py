@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, flash
 from decouple import config
-import json
 import uuid 
 import hashlib
 import firebase_admin
@@ -176,6 +175,24 @@ class productManager:
                 numberOfProducts = value
 
         return numberOfProducts
+
+    def query_user_products_with_key(self, user_document_number):
+        products =self.product_ref.child(user_document_number).child('onSaleProducts').child('products').get()
+        if products is not None:
+          listOfProducts = list(products.items())
+        else: 
+          listOfProducts = []
+
+        return listOfProducts
+
+    def update_product(self, user_document_number, product_key, product_data):
+        self.product_ref.child(user_document_number).child('onSaleProducts').child('products').child(product_key).update(product_data)
+
+    def delete_product(self, user_document_number, product_key):
+        self.product_ref.child(user_document_number).child('onSaleProducts').child('products').child(product_key).delete()
+        numberOfProducts = product_manager.queryNumberOfProducts(user_document_number)
+        self.product_ref.child(user_document_number).child('onSaleProducts').update({'numberOfProducts': int(numberOfProducts) - 1})
+
 
     def add_product(self, user_document_number, product):
         on_sale_products = self.product_ref.child(user_document_number).child('onSaleProducts')
@@ -566,34 +583,14 @@ def editarProduto():
             return redirect("/")
 
         else:
-            onSaleProducts = users.child(session['documentNumber']).child('onSaleProducts').get()
-            onSaleProductsRef = users.child(session['documentNumber']).child('onSaleProducts')
-            #print (onSaleProducts)
+            productsList = product_manager.query_user_products_with_key(session['documentNumber'])
 
-            numberOfProducts = onSaleProducts.get('numberOfProducts')
-            products = onSaleProducts.get('products') 
-            productsList = ()
-
-            # for product in products:
-            #     product_key = []
-            #     product_key.append(pr)
-            if products:
-                productsList = list( products.items() )
-
-                
-
-            #print (numberOfProducts)
-            #print (products)
-            #print(productsList)
-
-            #deleteProduct(users.child(session['documentNumber']).child('onSaleProducts'), 'oi')
-
-            
-
-            #print( onSaleProducts)
+            if productsList is not None:
+              numberOfProducts = len(productsList)
+            else:
+              numberOfProducts = 0
 
             return render_template("editarProduto.html",
-                                    onSaleProducts = onSaleProducts,
                                     numberOfProducts = numberOfProducts,
                                     productsList = productsList)
 
@@ -621,13 +618,13 @@ def editarProduto():
         
         elif request.form.get('Action') == "Deletar":
             print('Deletar')
+            product_manager.delete_product(session['documentNumber'], productKey)
 
             # Delets product / service
-            users.child(session['documentNumber']).child('onSaleProducts').child('products').child(productTitle).delete()
             #actualQuantity = users.child(session['documentNumber']).child('onSaleProducts').child('numberOfProducts').get()
             #users.child(session['documentNumber']).child('onSaleProducts').set({'numberOfproducts': actualQuantity - 1})
 
-            #return redirect('/editarProduto')
+            return redirect('/editarProduto')
 
 
 @app.route("/alterarProduto", methods=['GET', 'POST'])
@@ -647,10 +644,11 @@ def alterarProduto():
         productDescription = request.form.get('descricaoProduto')
         
         if (product['title'] != productTitle or product['description'] != productDescription or product['price'] != productPrice):
-            users.child(session['documentNumber']).child('onSaleProducts').child('products').child(product['productKey']).update(
-                {'description': productDescription, 
-                 'title': productTitle, 
-                 'price': productPrice, })
+            product_manager.update_product(session['documentNumber'], product['productKey'], {
+                'description': productDescription, 
+                'title': productTitle, 
+                'price': productPrice, 
+            })
 
         
         session.pop('product')
@@ -658,5 +656,6 @@ def alterarProduto():
     else:
     # Move a operação session.pop para o final da função
         return render_template("alterarProduto.html", product=product)
+    
 if __name__ == "__main__":
     app.run(debug=True)
