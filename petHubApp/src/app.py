@@ -65,10 +65,44 @@ class Utils:
 
     @staticmethod
     def validate_document(document_number):
+        return cpfcnpj.validate(document_number)
+    
+    @staticmethod
+    def is_document_number_unique(document_number):
+        try:
+            query =  user_manager.query_user(document_number).get()
+            print(query)
+        except:
+            query = None
+
+        return True if query == None else False
+
+    @staticmethod
+    def document_password_invalid(password, password_confirmation, document_number):
+        wrong_password = False
+        wrong_document = False
+        not_unique_document = False
+        password_encoded = Utils.hash_password(password)
+        password_confirmation_encoded = Utils.hash_password(password_confirmation)
+        password_length = len(password)
+
+        if  password_encoded != password_confirmation_encoded:
+            flash("as senhas escolhidas divergem", "invalid_password_message")
+            wrong_password = True
+        elif password_length < 7:
+            flash("senha inválida: a senha precisa ter no mínimo 6 caracteres", "invalid_password_message")
+            wrong_password = True
+
         if not cpfcnpj.validate(document_number):
             flash("número de documento inválido", "invalid_document_message")
+            wrong_document = True
 
-        return cpfcnpj.validate(document_number)
+        if  not Utils.is_document_number_unique(document_number):
+            flash("documento já cadastrado", "invalid_document_message")
+            not_unique_document = True
+
+        if  wrong_password or wrong_document or  not_unique_document: 
+            return True
 
 # Classe UserManager
 class UserManager:
@@ -238,7 +272,7 @@ def cadastro():
         password = request.form.get('password1')
         password_confirmation = request.form.get('password2')
 
-        if password != password_confirmation or len(password) < 7 or Utils.validate_document(document):
+        if Utils.document_password_invalid(password, password_confirmation, document):
             return redirect('/cadastro')
 
         hashed_password = Utils.hash_password(password)
@@ -374,8 +408,7 @@ def cadastroLoja():
         password = request.form.get('password1')
         password_confirmation = request.form.get('password2')
        
-        if password != password_confirmation or len(password) < 7 or not Utils.validate_document(document):
-            flash("Dados de cadastro inválidos", "invalid_registration_data")
+        if Utils.document_password_invalid(password, password_confirmation, document):
             return redirect('/cadastroLoja')
 
         hashed_password = Utils.hash_password(password)
