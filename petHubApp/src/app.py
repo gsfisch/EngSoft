@@ -39,8 +39,26 @@ class FirebaseConfig:
   "universe_domain": config("UNIVERSE_DOMAIN"),
   "client_email": config("CLIENT_EMAIL") 
 }
-        cred = credentials.Certificate(dbCredentials)
-        firebase_admin.initialize_app(cred, {"databaseURL": "https://pet-hub-rs-default-rtdb.firebaseio.com"})
+cred = credentials.Certificate(dbCredentials)
+firebase_admin.initialize_app(cred , {"databaseURL": "https://pet-hub-rs-default-rtdb.firebaseio.com"})
+
+# creating reference to root node
+ref = db.reference("/")
+users = db.reference("/users")
+
+def get_stores():
+    all_users = users.get()
+    listOfStores = []
+    if all_users is not None:
+    # Itera sobre cada usuário
+        for user_key, user_data in all_users.items():
+            if 'onSaleProducts' in user_data:
+                store = []
+                store.append(user_key)
+                store.append(user_data)
+                listOfStores.append(store)
+        return listOfStores
+
 
 firebase_config = FirebaseConfig()
 
@@ -576,7 +594,27 @@ def user():
     else:
         return redirect('/')
 
-@app.route("/logout", methods=['GET'])
+
+@app.route("/meusProdutosEServicos", methods =['GET'])
+def meusProdutosEservicos():
+        if(session["onSaleProducts"]["numberOfProducts"] == 0):
+            flash("Nenhum produto ou serviço cadastrados.", "empty_store_message")
+        return render_template("/meusProdutosEServicos.html")
+
+@app.route("/lojas")
+def produto():
+    if request.method == 'GET':
+            if "user" not in session:
+                return redirect("/")
+            if (session["userType"] == "pessoaJuridica"):
+                return redirect("/")
+            else:
+                stores = get_stores()
+                return render_template("/lojas.html", stores_list=stores)
+    
+    
+@app.route("/logout", methods =['GET'])
+
 def logout():
     session.clear()
     return redirect("/")

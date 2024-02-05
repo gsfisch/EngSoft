@@ -141,5 +141,13 @@ body {
 	color:red;
 }
 
+.list-group-item {
+    transition: background-color 0.3s ease; /* Adiciona uma transição suave para o efeito de hover */
+}
+
+.list-group-item:hover {
+    background-color: #004e2c; /* Cor de fundo quando o mouse estiver sobre o item */
+	color: #ddd;
+}
 
 

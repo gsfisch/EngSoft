@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta content="IE=edge" http-equiv="X-UA-Compatible" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>PetHub RS</title>
+    <!-- All CSS -->
+    <style>
+      ul {
+        list-style-type: none;
+      }
+    </style>
+    <link
+      href="{{ url_for('static', filename='css/bootstrap.min.css')}}"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css"
+    />
+    <link
+      href="{{ url_for('static', filename='css/style.css')}}"
+      rel="stylesheet"
+    />
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+  </head>
+  <body>
+    {% include 'navbar.html' %}
+    <!-- Inclui a barra de navegação -->
+
+    <div
+      class="row justify-content-center align-items-center"
+      style="margin-top: 100px"
+    >
+      <div class="col-md-5">
+        <div class="card mt-2">
+          <div class="card-body">
+            <h5 class="card-title text-center">Lojas</h5>
+            <div class="list-group">
+                {% for store in stores_list %}
+                <a href="#"
+                class="list-group-item list-group-item-action loja-link"
+                data-bs-toggle="modal"
+                data-bs-target="#lojaModal"
+                data-nome="{{ store[1]['userName'] }}"
+                data-email="{{ store[1]['userEmail'] }}"
+                data-cnpj="{{ store[0] }}"
+             >
+                {{ store[1]['userName'] }}
+             </a>
+                {% endfor %}
+            </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="lojaModal" tabindex="-1" aria-labelledby="lojaModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="lojaModalLabel">Detalhes da Loja</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Adicione aqui o conteúdo da sua modal, por exemplo: -->
+                    <p>Nome da Loja: <span id="nomeDaLoja"></span></p>
+                    <p>Email da Loja: <span id="emailDaLoja"></span></p>
+                    <p>CNPJ: <span id="cnpjDaLoja"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS (Popper.js and jQuery are required for Bootstrap's JavaScript components) -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.11/jquery.mask.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+       $(document).ready(function () {
+            // Manipula o clique nos links da loja
+            $('.loja-link').click(function () {
+                var nomeDaLoja = $(this).data('nome');
+                var emailDaLoja = $(this).data('email');
+                var cnpjDaLoja = $(this).data('cnpj');
+                // Atualize os elementos da modal com as informações
+                $('#nomeDaLoja').text(nomeDaLoja);
+                $('#emailDaLoja').text(emailDaLoja);
+                $('#cnpjDaLoja').text(cnpjDaLoja);
+
+                  // Remova a máscara antes de aplicar novamente
+                $('#cnpjDaLoja').unmask();
+
+                // Aplique a máscara novamente
+                $('#cnpjDaLoja').mask('00.000.000/0000-00');
+
+                // Exibir o modal
+                $('#lojaModal').modal('show');
+            });
+        });
+    </script>
+
+  </body>
+</html>
