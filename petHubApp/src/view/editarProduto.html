@@ -22,6 +22,16 @@
     
     <div class="row  justify-content-center align-items-center" style="margin-top: 100px;">
         <div class="col-md-5">
+            {% if productsList|length == 0 %}
+            <div class="card mt-2">
+                <div class="card-body" style="text-align: center;">
+
+                    <label class="card-title" style="padding-top: -10px;">
+                        <h4 >Nenhum produto cadastrado</h4>
+                    </label>
+                </div>
+            </div>
+            {% endif %}
             {% for product in productsList %}
             <div class="card mt-2">
                 <div class="card-body">
