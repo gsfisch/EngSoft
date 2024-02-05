@@ -39,9 +39,12 @@ class FirebaseConfig:
   "universe_domain": config("UNIVERSE_DOMAIN"),
   "client_email": config("CLIENT_EMAIL") 
 }
-cred = credentials.Certificate(dbCredentials)
-firebase_admin.initialize_app(cred , {"databaseURL": "https://pet-hub-rs-default-rtdb.firebaseio.com"})
 
+
+        cred = credentials.Certificate(dbCredentials)
+        firebase_admin.initialize_app(cred , {"databaseURL": "https://pet-hub-rs-default-rtdb.firebaseio.com"})
+
+firebase_config = FirebaseConfig()
 # creating reference to root node
 ref = db.reference("/")
 users = db.reference("/users")
@@ -60,7 +63,6 @@ def get_stores():
         return listOfStores
 
 
-firebase_config = FirebaseConfig()
 
 # Classe Utils
 class Utils:
@@ -396,8 +398,12 @@ def cadastro():
 @app.route("/meuCarrinho", methods=['GET', 'POST'])
 def meuCarrinho():
     if 'user' not in session:
+        flash("Você precisa estar logado para acessar esse recurso", "unauthorized_user")
         return redirect('/login')
     
+    if (session["userType"] == "pessoaJuridica"):
+       flash("Você não tem acesso a esta sessão logado como pessoa jurídica.", "unauthorized_user_message_lojas")
+       return redirect("/")
     if request.method == 'GET':
         cart_products= True
 
@@ -499,11 +505,6 @@ def loja():
         flash("Você não tem acesso a esta sessão logado como pessoa física.", "unauthorized_user_message")
         return render_template("/lojistaMenu.html")
 
-@app.route("/meusProdutosEServicos", methods =['GET'])
-def meusProdutosEservicos():
-        if(session["onSaleProducts"]["numberOfProducts"] == 0):
-            flash("Nenhum produto ou serviço cadastrados.", "empty_store_message")
-        return render_template("/meusProdutosEServicos.html")
 
 @app.route("/finalizarCompra", methods=['GET', 'POST'])
 def finalizarCompra():
@@ -595,18 +596,15 @@ def user():
         return redirect('/')
 
 
-@app.route("/meusProdutosEServicos", methods =['GET'])
-def meusProdutosEservicos():
-        if(session["onSaleProducts"]["numberOfProducts"] == 0):
-            flash("Nenhum produto ou serviço cadastrados.", "empty_store_message")
-        return render_template("/meusProdutosEServicos.html")
 
-@app.route("/lojas")
-def produto():
+@app.route("/lojas", methods=['GET'])
+def lojas():
     if request.method == 'GET':
             if "user" not in session:
-                return redirect("/")
+                flash("Você precisa estar logado para acessar esse recurso", "unauthorized_user")
+                return redirect("/login")
             if (session["userType"] == "pessoaJuridica"):
+                flash("Você não tem acesso a esta sessão logado como pessoa jurídica.", "unauthorized_user_message_lojas")
                 return redirect("/")
             else:
                 stores = get_stores()
@@ -629,7 +627,8 @@ def deletarConta():
 def produto():
     if request.method == 'GET':
         if "user" not in session:
-            return redirect("/")
+            flash("Você precisa estar logado para acessar esse recurso", "unauthorized_user")
+            return redirect("/login")
         if session["userType"] == "pessoaJuridica":
             return redirect("/")
         else:
@@ -692,6 +691,7 @@ def navbar():
 @app.route("/cadastrarProduto", methods =['GET', 'POST'])
 def cadastrarProduto():
     if "user" not in session:
+        flash("Você precisa estar logado para acessar esse recurso", "unauthorized_user")
         return redirect("/")
     if (session["userType"] == "pessoaFisica"):
         return redirect("/")
@@ -720,6 +720,7 @@ def editarProduto():
     # Checagem de permissão
     if request.method == 'GET':
         if "user" not in session:
+            flash("Você precisa estar logado para acessar esse recurso", "unauthorized_user")
             return redirect("/")
         if (session["userType"] == "pessoaFisica"):
             return redirect("/")
@@ -773,6 +774,7 @@ def editarProduto():
 def alterarProduto():
     # Checagem de permissão
     if "user" not in session:
+        flash("Você precisa estar logado para acessar esse recurso", "unauthorized_user")
         return redirect("/")
     if session["userType"] == "pessoaFisica":
         return redirect("/")

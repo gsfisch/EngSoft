@@ -13,6 +13,20 @@
 </head>
 <body>
 	{% include 'navbar.html' %} <!-- Inclui a barra de navegação -->
+	{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+      <div
+        class="alert alert-{{ category }} alert-dismissible fade show"
+        role="alert"
+        style="text-align: center; position: fixed; top: 60px; width: 100%; z-index: 1000; background-color: #ddd;"
+      >
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
     <div class="container-fluid">
 		<div class="row  justify-content-center align-items-center" style="margin-top: 100px;">
 			<div class="col-md-4">
