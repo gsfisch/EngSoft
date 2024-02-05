@@ -70,8 +70,7 @@ class Utils:
     @staticmethod
     def is_document_number_unique(document_number):
         try:
-            query =  user_manager.query_user(document_number).get()
-            print(query)
+            query =  user_manager.query_user(document_number)
         except:
             query = None
 
