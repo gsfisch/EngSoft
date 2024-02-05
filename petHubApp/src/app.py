@@ -47,6 +47,148 @@ firebase_admin.initialize_app(cred , {"databaseURL": "https://pet-hub-rs-default
 ref = db.reference("/")
 users = db.reference("/users")
 
+
+def getDate():
+    data_atual = datetime.now()
+
+    data_formatada = data_atual.strftime("%Y-%m-%d %H:%M:%S")
+
+    return data_formatada
+
+def getOrderID():
+    date = getDate()
+
+    numero_aleatorio_string = ''.join(random.choice('0123456789') for _ in range(6))
+
+    orderId = date + "" + "-" + numero_aleatorio_string
+
+    return orderId
+
+def queryCompletedPurchases():
+    completedPurchasesQuery = users.child(session['documentNumber']).child('userHistory').order_by_key().equal_to('completedPurchases').get()
+    completedPurchases = 0
+
+    if completedPurchasesQuery:
+         for key, value in completedPurchasesQuery.items():
+            completedPurchases = value
+
+    return completedPurchases
+
+def queryNumberOfProducts():
+    numberOfProductsQuery = users.child(session['documentNumber']).child('userCart').order_by_key().equal_to('numberOfProducts').get()
+    numberOfProducts = 0
+
+    if numberOfProductsQuery:
+        for key, value in numberOfProductsQuery.items():
+            numberOfProducts = value
+
+    return numberOfProducts
+
+def clearCart():
+    users.child(session['documentNumber']).child('userCart').child('products').delete()
+    users.child(session['documentNumber']).child('userCart').update(
+            {
+                'numberOfProducts' : 0
+            }
+        )
+
+def removeProductFromCart(product_key):
+
+    users.child(session['documentNumber']).child('userCart').child('products').child(product_key).delete()
+
+    numberOfProducts = queryNumberOfProducts()
+
+    users.child(session['documentNumber']).child('userCart').update(
+                {'numberOfProducts' : int(numberOfProducts) - 1})
+
+def addProductToCart(productTitle, productPrice, productDescription):
+    product = {
+            'title': productTitle,
+            'price': productPrice,
+            'description': productDescription
+        }
+
+    productKey = productTitle
+
+    while True:
+        if users.child(session['documentNumber']).child('userCart').child('products').child(productKey).get() != None:
+            productKey = productKey + "" + "'"
+        else:
+            break
+
+    users.child(session['documentNumber']).child('userCart').child('products').child(productKey).set(
+                {'description': productDescription, 
+                 'title': productTitle, 
+                 'price': productPrice, })
+        
+    numberOfProducts = queryNumberOfProducts()
+
+    users.child(session['documentNumber']).child('userCart').update(
+                {'numberOfProducts' : int(numberOfProducts) + 1})
+
+def updateCart(totalValue, deliveryAdress, payment, date, orderId):
+
+    users.child(session['documentNumber']).child('userHistory').child('orders').child(orderId).set(
+            {
+                'totalValue' : totalValue,
+                'deliveryAdress' : deliveryAdress,
+                'payment' : payment,
+                'orderDate' : date
+            }
+        )
+
+def updatePurchases(completedPurchases):
+    users.child(session['documentNumber']).child('userHistory').update(
+            {
+                'completedPurchases' : int(completedPurchases) + 1
+            }
+        )
+
+def getCartProducts():
+    currentUser = users.get()
+    listOfProducts = []
+    totalValue = 0
+    if currentUser is not None:
+    # Itera sobre cada usuário
+        for user_key, user_data in currentUser.items():
+            # Verifica se o usuário tem o nó 'onSaleProducts'
+            if 'userCart' in user_data:
+                if user_data['userCart'] is not None:
+                    on_sale_products = user_data['userCart']
+                    if 'products' in on_sale_products:
+                        products = on_sale_products['products']
+                # Itera sobre cada produto em 'onSaleProducts'
+                        for product_key, product_data in products.items():
+                            # Verifica se o produto tem o campo 'nome'
+                            if 'price' in product_data:
+                                totalValue += float(product_data['price'])
+                            product_complete = []
+                            product_complete.append(product_key)
+                            product_complete.append(product_data)
+                            listOfProducts.append(product_complete)
+
+    totalValueFormatted = "{:.{}f}".format(totalValue, 2)
+
+    return listOfProducts, totalValueFormatted
+
+def getUserHistory():
+    currentUser = users.get()
+    listOfOrders = []
+    if currentUser is not None:
+    # Itera sobre cada usuário
+        for user_key, user_data in currentUser.items():
+            # Verifica se o usuário tem o nó 'onSaleProducts'
+            if 'userHistory' in user_data:
+                if user_data['userHistory'] is not None:
+                    doneOrders = user_data['userHistory']
+                    if 'orders' in doneOrders:
+                        orders = doneOrders['orders']
+                # Itera sobre cada produto em 'onSaleProducts'
+                        for order_key, order_data in orders.items():
+                            # Verifica se o produto tem o campo 'nome'
+                            listOfOrders.append(order_data)
+    return listOfOrders                
+    
 # função para receber os nomes das lojas e fazer a requisição de produtos
 def consultar_Lojas():
     currentUser = users.get()
@@ -294,100 +436,35 @@ def checkUserPermissions(renderTemplate):
 @app.route("/meuCarrinho", methods =['GET', 'POST'])
 def meuCarrinho():
     if request.method == 'GET':
-        numberOfProductsQuery = users.child(session['documentNumber']).child('userCart').order_by_key().equal_to('numberOfProducts').get()
-        numberOfProducts = 0
-
-        if numberOfProductsQuery:
-            for key, value in numberOfProductsQuery.items():
-                numberOfProducts = value
+        numberOfProducts = queryNumberOfProducts()
 
         if(int(numberOfProducts) == 0):
             flash("Carrinho vazio.", "empty_cart_message")
             return render_template("/meuCarrinho.html", canBuy = False)
         else:
-            currentUser = users.get()
-            listOfProducts = []
-            if currentUser is not None:
-            # Itera sobre cada usuário
-                for user_key, user_data in currentUser.items():
-                    # Verifica se o usuário tem o nó 'onSaleProducts'
-                    if 'userCart' in user_data:
-                        if user_data['userCart'] is not None:
-                            on_cart_products = user_data['userCart']
-                            if 'products' in on_cart_products:
-                                products = on_cart_products['products']
-                        # Itera sobre cada produto em 'onSaleProducts'
-                                for product_key, product_data in products.items():
-                                    # Verifica se o produto tem o campo 'nome'
-                                    product_complete = []
-                                    product_complete.append(product_key)
-                                    product_complete.append(product_data)
-                                    listOfProducts.append(product_complete)
-            
+            listOfProducts, _ = getCartProducts()
             return render_template("/meuCarrinho.html", lista_de_itens=listOfProducts, canBuy = True) 
     
     elif request.method == 'POST':
         productKey = request.form.get('chaveProduto')
         productTitle = request.form.get('tituloProduto')
-        productPrice = request.form.get('precoProduto')
-        productDescription = request.form.get('descricaoProduto')
 
-        product = {
-            'title': productTitle,
-            'price': productPrice,
-            'description': productDescription
-        }
-
-        users.child(session['documentNumber']).child('userCart').child('products').child(productKey).delete()
-        
-        numberOfProductsQuery = users.child(session['documentNumber']).child('userCart').order_by_key().equal_to('numberOfProducts').get()
-        numberOfProducts = 0
-
-        if numberOfProductsQuery:
-            for key, value in numberOfProductsQuery.items():
-                numberOfProducts = value
-
-        users.child(session['documentNumber']).child('userCart').update(
-                {'numberOfProducts' : int(numberOfProducts) - 1})
+        removeProductFromCart(product_key=productKey)
         
         flash(f'Produto "{productTitle}" removido do carrinho com sucesso!', 'cart_updated_success')
         return redirect("/meuCarrinho")
 
 @app.route("/meuHistorico", methods =['GET'])
 def meuHistorico():
-    completedPurchasesQuery = users.child(session['documentNumber']).child('userHistory').order_by_key().equal_to('completedPurchases').get()
-    completedPurchases = 0
-
-    if completedPurchasesQuery:
-        for key, value in completedPurchasesQuery.items():
-            completedPurchases = value
+    completedPurchases = queryCompletedPurchases()
 
     if(int(completedPurchases) == 0):
         flash("Nenhuma compra efetuada.", "empty_history_message")
         return render_template("/meuHistorico.html")
     else:
-        currentUser = users.get()
-        listOfOrders = []
-        if currentUser is not None:
-        # Itera sobre cada usuário
-            for user_key, user_data in currentUser.items():
-                # Verifica se o usuário tem o nó 'onSaleProducts'
-                if 'userHistory' in user_data:
-                    if user_data['userHistory'] is not None:
-                        doneOrders = user_data['userHistory']
-                        if 'orders' in doneOrders:
-                            orders = doneOrders['orders']
-                    # Itera sobre cada produto em 'onSaleProducts'
-                            for order_key, order_data in orders.items():
-                                # Verifica se o produto tem o campo 'nome'
-                                listOfOrders.append(order_data)
-
-        
+        listOfOrders = getUserHistory()
         return render_template("/meuHistorico.html", lista_de_pedidos=listOfOrders) 
     
-
-        
-
 @app.route("/meusProdutosEServicos", methods =['GET'])
 def meusProdutosEservicos():
         if(session["onSaleProducts"]["numberOfProducts"] == 0):
@@ -427,36 +504,8 @@ def produto():
         productPrice = request.form.get('precoProduto')
         productDescription = request.form.get('descricaoProduto')
 
-        product = {
-            'title': productTitle,
-            'price': productPrice,
-            'description': productDescription
-        }
+        addProductToCart(productTitle=productTitle, productPrice=productPrice, productDescription=productDescription)
 
-        productKey = productTitle
-
-        while True:
-            if users.child(session['documentNumber']).child('userCart').child('products').child(productKey).get() != None:
-                productKey = productKey + "" + "'"
-            else:
-                break
-
-        users.child(session['documentNumber']).child('userCart').child('products').child(productKey).set(
-                {'description': productDescription, 
-                 'title': productTitle, 
-                 'price': productPrice, })
-        
-        numberOfProductsQuery = users.child(session['documentNumber']).child('userCart').order_by_key().equal_to('numberOfProducts').get()
-        numberOfProducts = 0
-
-        if numberOfProductsQuery:
-            for key, value in numberOfProductsQuery.items():
-                numberOfProducts = value
-
-
-        users.child(session['documentNumber']).child('userCart').update(
-                {'numberOfProducts' : int(numberOfProducts) + 1})
-        
         flash(f'Produto "{productTitle}" adicionado ao carrinho com sucesso!', 'cart_updated_success')
         return redirect("/produtos")
     
@@ -467,84 +516,23 @@ def processPurchase():
 @app.route("/finalizarCompra", methods = ['GET', 'POST'])
 def purchases():
     if request.method == 'GET':
-        numberOfProductsQuery = users.child(session['documentNumber']).child('userCart').order_by_key().equal_to('numberOfProducts').get()
-        numberOfProducts = 0
-
-        if numberOfProductsQuery:
-            for key, value in numberOfProductsQuery.items():
-                numberOfProducts = value
+        numberOfProducts = queryNumberOfProducts()
 
         if(int(numberOfProducts) == 0):
             flash("Carrinho vazio.", "empty_cart_message")
             return render_template("/finalizarCompra.html", canBuy = False)
         else:
-            currentUser = users.get()
-            listOfProducts = []
-            totalValue = 0
-            if currentUser is not None:
-            # Itera sobre cada usuário
-                for user_key, user_data in currentUser.items():
-                    # Verifica se o usuário tem o nó 'onSaleProducts'
-                    if 'userCart' in user_data:
-                        if user_data['userCart'] is not None:
-                            on_sale_products = user_data['userCart']
-                            if 'products' in on_sale_products:
-                                products = on_sale_products['products']
-                        # Itera sobre cada produto em 'onSaleProducts'
-                                for product_key, product_data in products.items():
-                                    # Verifica se o produto tem o campo 'nome'
-                                    if 'price' in product_data:
-                                        totalValue += float(product_data['price'])
-                                    product_complete = []
-                                    product_complete.append(product_key)
-                                    product_complete.append(product_data)
-                                    listOfProducts.append(product_complete)
-
-            totalValueFormatted = "{:.{}f}".format(totalValue, 2)
-            return render_template("/finalizarCompra.html", lista_de_itens=listOfProducts, canBuy = True, totalValue = totalValueFormatted) 
+            listOfProducts, totalValue = getCartProducts()
+            return render_template("/finalizarCompra.html", lista_de_itens=listOfProducts, canBuy = True, totalValue = totalValue) 
     
     elif request.method == 'POST':
         productKey = request.form.get('chaveProduto')
         productTitle = request.form.get('tituloProduto')
-        productPrice = request.form.get('precoProduto')
-        productDescription = request.form.get('descricaoProduto')
 
-        product = {
-            'title': productTitle,
-            'price': productPrice,
-            'description': productDescription
-        }
-
-        users.child(session['documentNumber']).child('userCart').child('products').child(productKey).delete()
-        
-        numberOfProductsQuery = users.child(session['documentNumber']).child('userCart').order_by_key().equal_to('numberOfProducts').get()
-        numberOfProducts = 0
-
-        if numberOfProductsQuery:
-            for key, value in numberOfProductsQuery.items():
-                numberOfProducts = value
-
-        users.child(session['documentNumber']).child('userCart').order_by_key().equal_to('numberOfProducts').update(
-                {'numberOfProducts' : int(numberOfProducts['numberOfProducts']) - 1})
+        removeProductFromCart(product_key=productKey)
         
         flash(f'Produto "{productTitle}" removido do carrinho com sucesso!', 'cart_updated_success')
         return redirect("/finalizarCompra")
-
-def getDate():
-    data_atual = datetime.now()
-
-    data_formatada = data_atual.strftime("%Y-%m-%d %H:%M:%S")
-
-    return data_formatada
-
-def getOrderID():
-    date = getDate()
-
-    numero_aleatorio_string = ''.join(random.choice('0123456789') for _ in range(6))
-
-    orderId = date + "" + "-" + numero_aleatorio_string
-
-    return orderId
 
 @app.route("/efetuarPedido", methods = ['POST'])
 def purchaseDone():
@@ -552,37 +540,13 @@ def purchaseDone():
         deliveryAdress = request.form.get('endereco')
         payment = request.form.get('tipoPagamento')
 
-        orderId = getOrderID()
-        date = getDate()
+        orderId=getOrderID()
 
-        users.child(session['documentNumber']).child('userHistory').child('orders').child(orderId).set(
-            {
-                'totalValue' : totalValue,
-                'deliveryAdress' : deliveryAdress,
-                'payment' : payment,
-                'orderDate' : date
-            }
-        )
+        updateCart(totalValue=totalValue, deliveryAdress=deliveryAdress, payment=payment, date = getDate(), orderId=orderId)
+        
+        updatePurchases(completedPurchases = queryCompletedPurchases())
 
-        completedPurchasesQuery = users.child(session['documentNumber']).child('userHistory').order_by_key().equal_to('completedPurchases').get()
-        completedPurchases = 0
-
-        if completedPurchasesQuery:
-            for key, value in completedPurchasesQuery.items():
-                completedPurchases = value
-
-        users.child(session['documentNumber']).child('userHistory').update(
-            {
-                'completedPurchases' : int(completedPurchases) + 1
-            }
-        )
-
-        users.child(session['documentNumber']).child('userCart').child('products').delete()
-        users.child(session['documentNumber']).child('userCart').update(
-            {
-                'numberOfProducts' : 0
-            }
-        )
+        clearCart()
 
         flash(f'Pedido "{orderId}" efetuado com sucesso!', 'order_success')
         return redirect("/meuHistorico")
