@@ -1,21 +1,21 @@
 from flask import Flask, render_template, request, redirect, session, flash
 from decouple import config
-from json import dumps
 import json
 import uuid 
 import hashlib
-from pprint import pprint
 import firebase_admin
-from firebase_admin import auth, db, credentials, firestore
+from firebase_admin import credentials, db
 from pycpfcnpj import cpfcnpj
 from datetime import datetime
 import random
 
-
-app = Flask(__name__,template_folder='view')
+app = Flask(__name__, template_folder='view')
 app.secret_key = 'secret'
 
-firebaseConfig =  {
+# Configuração do Firebase
+class FirebaseConfig:
+    def __init__(self):
+        firebaseConfig =  {
     'apiKey': config("FIREBASE_API_KEY"),
     'authDomain': config("FIREBASE_AUTH_DOMAIN"),
     'databaseURL':config("DATABASE_URL"),
@@ -27,7 +27,7 @@ firebaseConfig =  {
 }
 
 #initialize DB
-dbCredentials = {
+        dbCredentials = {
   "type": config("TYPE"),
   "project_id": config("FIREBASE_PROJECT_ID"),
   "private_key_id": config("PRIVATE_KEY_ID"),
@@ -40,348 +40,257 @@ dbCredentials = {
   "universe_domain": config("UNIVERSE_DOMAIN"),
   "client_email": config("CLIENT_EMAIL") 
 }
-cred = credentials.Certificate(dbCredentials)
-firebase_admin.initialize_app(cred , {"databaseURL": "https://pet-hub-rs-default-rtdb.firebaseio.com"})
+        cred = credentials.Certificate(dbCredentials)
+        firebase_admin.initialize_app(cred, {"databaseURL": "https://pet-hub-rs-default-rtdb.firebaseio.com"})
 
-# creating reference to root node
-ref = db.reference("/")
-users = db.reference("/users")
+firebase_config = FirebaseConfig()
 
+# Classe Utils
+class Utils:
+    @staticmethod
+    def get_date():
+        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-def getDate():
-    data_atual = datetime.now()
+    @staticmethod
+    def get_order_id():
+        date = Utils.get_date()
+        random_string = ''.join(random.choices('0123456789', k=6))
+        return f"{date}-{random_string}"
 
-    data_formatada = data_atual.strftime("%Y-%m-%d %H:%M:%S")
+    @staticmethod
+    def hash_password(password):
+        sha1 = hashlib.sha1()
+        sha1.update(password.encode('utf-8'))
+        return sha1.hexdigest()
 
-    return data_formatada
+    @staticmethod
+    def validate_document(document_number):
+        if not cpfcnpj.validate(document_number):
+            flash("número de documento inválido", "invalid_document_message")
 
-def getOrderID():
-    date = getDate()
+        return cpfcnpj.validate(document_number)
 
-    numero_aleatorio_string = ''.join(random.choice('0123456789') for _ in range(6))
+# Classe UserManager
+class UserManager:
+    def __init__(self):
+        self.users_ref = db.reference("/users")
 
-    orderId = date + "" + "-" + numero_aleatorio_string
+    def query_user(self, document_number):
+        return self.users_ref.child(document_number).get()
 
-    return orderId
+    def add_user(self, document_number, user_data):
+        self.users_ref.child(document_number).set(user_data)
 
-def queryCompletedPurchases():
-    completedPurchasesQuery = users.child(session['documentNumber']).child('userHistory').order_by_key().equal_to('completedPurchases').get()
-    completedPurchases = 0
+    def delete_user(self, document_number):
+        self.users_ref.child(document_number).delete()
 
-    if completedPurchasesQuery:
-         for key, value in completedPurchasesQuery.items():
-            completedPurchases = value
+    def update_user(self, document_number, update_data):
+        self.users_ref.child(document_number).update(update_data)
 
-    return completedPurchases
+    def set_history(self, document_number, update_data, orderId):
+        self.users_ref.child(document_number).child('userHistory').child('orders').child(orderId).set(update_data)
 
-def queryNumberOfProducts():
-    numberOfProductsQuery = users.child(session['documentNumber']).child('userCart').order_by_key().equal_to('numberOfProducts').get()
-    numberOfProducts = 0
+    def query_history(self, document_number):
+        orders =user_manager.users_ref.child(document_number).child('userHistory').child('orders').get()
+        listOfOrders = []
+        if orders is not None:
+        # Itera sobre cada usuário
+            for order_key, order_data in orders.items():
+                listOfOrders.append(order_data)
 
-    if numberOfProductsQuery:
-        for key, value in numberOfProductsQuery.items():
-            numberOfProducts = value
+        return listOfOrders
 
-    return numberOfProducts
+    def query_completed_purchases(self, document_number):
+        completedPurchasesQuery = self.users_ref.child(document_number).child('userHistory').order_by_key().equal_to('completedPurchases').get()
+        completedPurchases = 0
+        if completedPurchasesQuery:
+            for key, value in completedPurchasesQuery.items():
+                completedPurchases = value
+        return completedPurchases
 
-def clearCart():
-    users.child(session['documentNumber']).child('userCart').child('products').delete()
-    users.child(session['documentNumber']).child('userCart').update(
-            {
-                'numberOfProducts' : 0
-            }
-        )
+    def update_purchases(self, document_number, completedPurchases):
+        self.users_ref.child(document_number).child('userHistory').update({'completedPurchases': int(completedPurchases) + 1})
 
-def removeProductFromCart(product_key):
+    # ... Métodos da classe UserManager como já definidos anteriormente ...
+class productManager:
+    def __init__(self):
+        self.product_ref = db.reference("/users")
 
-    users.child(session['documentNumber']).child('userCart').child('products').child(product_key).delete()
+    def query_products(self):
+        users =self.product_ref.get()
+        listOfProducts = []
+        if users is not None:
+        # Itera sobre cada usuário
+            for user_key, user_data in users.items():
+                # Verifica se o usuário tem o nó 'onSaleProducts'
+                if 'onSaleProducts' in user_data:
+                    if user_data['onSaleProducts'] is not None:
+                        on_sale_products = user_data['onSaleProducts']
+                        if 'products' in on_sale_products:
+                            products = on_sale_products['products']
+                    # Itera sobre cada produto em 'onSaleProducts'
+                            for product_key, product_data in products.items():
+                                # Verifica se o produto tem o campo 'nome'
+                                listOfProducts.append(product_data)
+            return listOfProducts
 
-    numberOfProducts = queryNumberOfProducts()
-
-    users.child(session['documentNumber']).child('userCart').update(
-                {'numberOfProducts' : int(numberOfProducts) - 1})
-
-def addProductToCart(productTitle, productPrice, productDescription):
-    product = {
-            'title': productTitle,
-            'price': productPrice,
-            'description': productDescription
-        }
-
-    productKey = productTitle
-
-    while True:
-        if users.child(session['documentNumber']).child('userCart').child('products').child(productKey).get() != None:
-            productKey = productKey + "" + "'"
-        else:
-            break
-
-    users.child(session['documentNumber']).child('userCart').child('products').child(productKey).set(
-                {'description': productDescription, 
-                 'title': productTitle, 
-                 'price': productPrice, })
-        
-    numberOfProducts = queryNumberOfProducts()
-
-    users.child(session['documentNumber']).child('userCart').update(
-                {'numberOfProducts' : int(numberOfProducts) + 1})
-
-def updateCart(totalValue, deliveryAdress, payment, date, orderId):
-
-    users.child(session['documentNumber']).child('userHistory').child('orders').child(orderId).set(
-            {
-                'totalValue' : totalValue,
-                'deliveryAdress' : deliveryAdress,
-                'payment' : payment,
-                'orderDate' : date
-            }
-        )
-
-def updatePurchases(completedPurchases):
-    users.child(session['documentNumber']).child('userHistory').update(
-            {
-                'completedPurchases' : int(completedPurchases) + 1
-            }
-        )
-
-def getCartProducts():
-    currentUser = users.get()
-    listOfProducts = []
-    totalValue = 0
-    if currentUser is not None:
-    # Itera sobre cada usuário
-        for user_key, user_data in currentUser.items():
-            # Verifica se o usuário tem o nó 'onSaleProducts'
-            if 'userCart' in user_data:
-                if user_data['userCart'] is not None:
-                    on_sale_products = user_data['userCart']
-                    if 'products' in on_sale_products:
-                        products = on_sale_products['products']
-                # Itera sobre cada produto em 'onSaleProducts'
-                        for product_key, product_data in products.items():
-                            # Verifica se o produto tem o campo 'nome'
-                            if 'price' in product_data:
-                                totalValue += float(product_data['price'])
-                            product_complete = []
-                            product_complete.append(product_key)
-                            product_complete.append(product_data)
-                            listOfProducts.append(product_complete)
-
-    totalValueFormatted = "{:.{}f}".format(totalValue, 2)
-
-    return listOfProducts, totalValueFormatted
-
-def getUserHistory():
-    currentUser = users.get()
-    listOfOrders = []
-    if currentUser is not None:
-    # Itera sobre cada usuário
-        for user_key, user_data in currentUser.items():
-            # Verifica se o usuário tem o nó 'onSaleProducts'
-            if 'userHistory' in user_data:
-                if user_data['userHistory'] is not None:
-                    doneOrders = user_data['userHistory']
-                    if 'orders' in doneOrders:
-                        orders = doneOrders['orders']
-                # Itera sobre cada produto em 'onSaleProducts'
-                        for order_key, order_data in orders.items():
-                            # Verifica se o produto tem o campo 'nome'
-                            listOfOrders.append(order_data)
-    return listOfOrders                
     
-# função para receber os nomes das lojas e fazer a requisição de produtos
-def consultar_Lojas():
-    currentUser = users.get()
-    listOfProducts = []
-    if currentUser is not None:
-    # Itera sobre cada usuário
-        for user_key, user_data in currentUser.items():
-            # Verifica se o usuário tem o nó 'onSaleProducts'
-            if 'onSaleProducts' in user_data:
-                if user_data['onSaleProducts'] is not None:
-                    on_sale_products = user_data['onSaleProducts']
-                    if 'products' in on_sale_products:
-                        products = on_sale_products['products']
-                # Itera sobre cada produto em 'onSaleProducts'
-                        for product_key, product_data in products.items():
-                            # Verifica se o produto tem o campo 'nome'
-                            listOfProducts.append(product_data)
-        return listOfProducts
+# Classe CartManager
+class CartManager:
+    def __init__(self, user_manager):
+        self.user_manager = user_manager
+
+    def queryCart(self, document_number):
+        products =user_manager.users_ref.child(document_number).child('userCart').child('products').get()
+        print(products)
+        listOfProducts = []
+        totalValue = 0
+        if products is not None:
+        # Itera sobre cada usuário
+            for product_key, product_data in products.items():
+                # Verifica se o produto tem o campo 'nome'
+                if 'price' in product_data:
+                    totalValue += float(product_data['price'])
+                product_complete = []
+                product_complete.append(product_key)
+                product_complete.append(product_data)
+                listOfProducts.append(product_complete)
+
+        totalValueFormatted = "{:.{}f}".format(totalValue, 2)
+
+        return listOfProducts, totalValueFormatted
+    
+    def add_product_to_cart(self, document_number, product_data):
+        product_key = product_data['title']
+        existing_product = self.user_manager.users_ref.child(document_number).child('userCart').child('products').child(product_key).get()
+
+        while existing_product:
+            product_key += "'"
+            existing_product = self.user_manager.users_ref.child(document_number).child('userCart').child('products').child(product_key).get()
+
+        self.user_manager.users_ref.child(document_number).child('userCart').child('products').child(product_key).set(product_data)
+        number_of_products = self.user_manager.users_ref.child(document_number).child('userCart').child('numberOfProducts').get() or 0
+        self.user_manager.users_ref.child(document_number).child('userCart').update({'numberOfProducts': int(number_of_products) + 1})
+
+    def remove_product_from_cart(self, document_number, product_key):
+        self.user_manager.users_ref.child(document_number).child('userCart').child('products').child(product_key).delete()
+        number_of_products = self.user_manager.users_ref.child(document_number).child('userCart').child('numberOfProducts').get() or 0
+        self.user_manager.users_ref.child(document_number).child('userCart').update({'numberOfProducts': int(number_of_products) - 1})
+
+    def clear_cart(self, document_number):
+        self.user_manager.users_ref.child(document_number).child('userCart').child('products').delete()
+        self.user_manager.users_ref.child(document_number).child('userCart').update({'numberOfProducts': 0})
+
+    def get_cart_products_and_total(self, document_number):
+        cart_ref = db.reference(f"/users/{document_number}/cart")
+        cart_data = cart_ref.get()
+        cart_products = []
+
+        if cart_data:
+            total_price = 0
+            for product_key, product_data in cart_data.items():
+                cart_products.append({
+                    "key": product_key,
+                    "data": product_data
+                })
+                total_price += product_data.get("price", 0)
+
+            return cart_products, total_price
+    # ... Métodos da classe CartManager como já definidos anteriormente ...
+
+user_manager = UserManager()
+cart_manager = CartManager(user_manager)
+product_manager = productManager()
 
 @app.route("/", methods =['POST', 'GET'])
 def index():
     return render_template('index.html')
 
-@app.route("/user", methods =['POST', 'GET'])
-def user():
-     if(session["userType"] == "pessoaJuridica"):
-        return redirect("/minhaLoja")
-     elif(session["userType"] == "pessoaFisica"):
-        flash(session["user"], "user_name")
-        return render_template("perfil.html")
-    
-
-def invalid_document_number(document_number):
-    return not cpfcnpj.validate(document_number)     
-
-@app.route("/login", methods =['POST', 'GET'])
+@app.route("/login", methods=['POST', 'GET'])
 def login():
+    if 'user' in session:
+        return redirect('/user')
 
-    if('user' in session):
-      return redirect('/user')
-    
     if request.method == 'POST':
-        document_number = request.form.get('document')
+        document_number = request.form.get('document').replace("-", "").replace(".", "").replace("/", "")
         password = request.form.get('password')
-        try:
-            document_number_formatted = document_number.replace("-", "").replace(".", "").replace("/", "")
-            if invalid_document_number(document_number_formatted):
-                flash("número de documento inválido", "invalid_document_message")
-                return render_template('login.html')
-            elif len(password) < 7:
-                flash("senha ou usuário inválidos", "invalid_user_password_message")
-                return render_template('login.html')
-            else:
-                # busca no banco de dados o usuário pelo número do documento
-                loginUser = users.child(document_number_formatted).get()
+        loginUser = user_manager.query_user(document_number)
 
-                # encodifica a senha do usuário
-                password_encoded = password.encode('utf-8')
-                sha1 = hashlib.sha1()
-                # Update the hash object with the encoded password
-                sha1.update(password_encoded)
-                # Get the hexadecimal representation of the hash
-                hashed_password = sha1.hexdigest()
-            
-                if loginUser["userPassword"] == hashed_password:
-                    session["user"] = loginUser["userName"]
-                    session["documentNumber"] = document_number_formatted
-                    session["userType"] = "pessoaJuridica" if len(document_number_formatted) > 11 else "pessoaFisica"
-                    if(session["userType"] == "pessoaJuridica"):
-                        session["onSaleProducts"] = loginUser["onSaleProducts"]
-                        return redirect("/minhaLoja")
-                    elif(session["userType"] == "pessoaFisica"):
-                        session["userCart"] = loginUser["userCart"]
-                        session["userHistory"] = loginUser["userHistory"]
-                        return redirect("/user")
-                    # vai ter o login de administrador também
-                else:
-                    flash("senha ou usuário inválidos", "invalid_user_password_message")
-                    return redirect("/login")
-        except:
-            flash("senha ou usuário inválidos", "invalid_user_password_message")
-            return render_template('login.html')
-    if request.method == "GET":
-        return render_template('login.html')
-        
-
-def is_document_number_unique(document_number):
-    try:
-        query =  users.child(document_number).get()
-    except:
-        query = None
-
-    return True if query == None else False
-
-    
-def invalid_password_or_document(password_encoded, password_confirmation_encoded, password_length, document_number):
-    wrong_password = False
-    unique_document = True
-    is_invalid_document_number = False
-
-    if  password_encoded != password_confirmation_encoded:
-        flash("as senhas escolhidas divergem", "invalid_password_message")
-        wrong_password = True
-    elif password_length < 7:
-        flash("senha inválida: a senha precisa ter no mínimo 6 caracteres", "invalid_password_message")
-        wrong_password = True
-    
-    if invalid_document_number(document_number):
-        flash("número de documento inválido", "invalid_document_message")
-        is_invalid_document_number = True
-    
-    if not is_document_number_unique(document_number):
-        flash("documento já cadastrado", "invalid_document_message")
-        unique_document = False
-        
-    if  wrong_password or not unique_document or  is_invalid_document_number:
-        return True
-    
-def cadastrarUsuario(tipoCadastro, password, password_confirmation, document_formatted,  name, email, uid):
-    password_encoded = password.encode('utf-8')
-    password_confirmation_encoded = password_confirmation.encode('utf-8')
-    password_length = len(password)
-    
-    if invalid_password_or_document(password_encoded, password_confirmation_encoded, password_length, document_formatted):
-        if(tipoCadastro == 'pessoaFisica'):
-            return redirect('/cadastro')
-        elif(tipoCadastro == 'pessoaJuridica'):
-            return redirect('/cadastroLoja')
+        if loginUser and loginUser["userPassword"] == Utils.hash_password(password):
+            session["user"] = loginUser["userName"]
+            session["documentNumber"] = document_number
+            session["userType"] = "pessoaJuridica" if len(document_number) > 11 else "pessoaFisica"
+            return redirect('/user')
+        else:
+            flash("Senha ou usuário inválidos", "invalid_user_password_message")
+            return redirect('/login')
     else:
-        # Create a SHA-1 hash object
-        sha1 = hashlib.sha1()
+        return render_template('login.html')
+    # ... Implementação da rota de login ...
 
-        # Update the hash object with the encoded password
-        sha1.update(password_encoded)
-
-        # Get the hexadecimal representation of the hash
-        hashed_password = sha1.hexdigest()
-
-        if(tipoCadastro == "pessoaFisica"):
-            products = {}
-            userCart = {
-                "products": products,
-                "numberOfProducts": len(products), 
-            }
-
-            completedPurchases = {}
-            userHistory = {
-                "completedPurchases": len(completedPurchases)
-            }
-            users.child(document_formatted).set(
-                {
-                    "uid": uid,
-                    "userName": name,
-                    "userPassword": hashed_password,
-                    "userEmail": email,
-                    "userCart": userCart,
-                    "userHistory": userHistory
-                }
-            )
-
-        elif(tipoCadastro == 'pessoaJuridica'):
-            products = {}
-            onSaleProducts = {
-                'products': products,
-                'numberOfProducts': len(products), 
-            }
-            users.child(document_formatted).set(
-                {
-                    'uid': uid,
-                    'userName': name,
-                    'userPassword': hashed_password,
-                    'userEmail': email,
-                    'onSaleProducts': onSaleProducts
-                }
-            )        
-    return redirect('/login')
-
-@app.route("/cadastro", methods =['POST', 'GET'])
+@app.route("/cadastro", methods=['POST', 'GET'])
 def cadastro():
-    if request.method == 'POST':   
-        idx = uuid.uuid4(),
-        uid = str(idx) 
+    if request.method == 'POST':
+        uid = str(uuid.uuid4())
         email = request.form.get('email')
         name = request.form.get('nome')
-        document = request.form.get('cpf')
-        document_formatted = document.replace("-", "").replace(".", "").replace("/", "")
+        document = request.form.get('cpf').replace("-", "").replace(".", "").replace("/", "")
         password = request.form.get('password1')
         password_confirmation = request.form.get('password2')
-        # TODO: teremos profile picture?
-        # profilePicture = request.form.get('profilePicture')
-        return cadastrarUsuario("pessoaFisica", password, password_confirmation, document_formatted, name, email, uid)
+
+        if password != password_confirmation or len(password) < 7 or Utils.validate_document(document):
+            return redirect('/cadastro')
+
+        hashed_password = Utils.hash_password(password)
+        user_data = {
+            "uid": uid,
+            "userName": name,
+            "userPassword": hashed_password,
+            "userEmail": email,
+            "userCart": {"products": {}, "numberOfProducts": 0},
+            "userHistory": {"completedPurchases": 0}
+        }
+        user_manager.add_user(document, user_data)
+        return redirect('/login')
     else:
         return render_template('cadastro.html')
+    # ... Implementação da rota de cadastro ...
+
+@app.route("/meuCarrinho", methods=['GET', 'POST'])
+def meuCarrinho():
+    if 'user' not in session:
+        return redirect('/login')
+    
+    if request.method == 'GET':
+        cart_products= True
+
+        cart_data, _ = cart_manager.queryCart(session['documentNumber'])
+        print(cart_data)
+
+        if cart_data == None or cart_data == []:
+            cart_products = False
+
+        print(cart_products)
+        return render_template("meuCarrinho.html", lista_de_itens=cart_data, canBuy=bool(cart_products))
+
+    elif request.method == 'POST':
+        product_key = request.form.get('chaveProduto')
+        cart_manager.remove_product_from_cart(session['documentNumber'], product_key)
+        flash("Produto removido do carrinho com sucesso!", 'cart_updated_success')
+        return redirect("/meuCarrinho")
+    # ... Implementação da rota do carrinho de compras ...
+
+@app.route("/meuHistorico", methods=['GET'])
+def meuHistorico():
+    if 'user' not in session:
+        return redirect('/login')
+
+    if user_manager.query_completed_purchases(session['documentNumber']) == 0:
+        flash("Nenhuma compra efetuada.", "empty_history_message")
+        return render_template("/meuHistorico.html")
+    else:
+        user_history = user_manager.query_history(session['documentNumber'])
+        return render_template("/meuHistorico.html", lista_de_pedidos=user_history)
 
 @app.route("/lojista")
 def lojista():
@@ -389,15 +298,62 @@ def lojista():
 
 @app.route("/minhaLoja")
 def loja():
-    if('user' in session):
-        if(session["userType"] == "pessoaJuridica"):
-            flash(session["user"], "user_name")
-            return render_template("/minhaLoja.html")
-        elif(session["userType"] == "pessoaFisica"):
-             flash("Você não tem acesso a esta sessão logado como pessoa física.", "unauthorized_user_message_minhaLoja")
-             return render_template("/lojistaMenu.html")
+    if 'user' in session and session["userType"] == "pessoaJuridica":
+        flash(session["user"], "user_name")
+        return render_template("/minhaLoja.html")
+        print("OIOIOIO")
+
     else:
-        return render_template("/login.html")
+        print("OIOIOIO")
+        flash("Você não tem acesso a esta sessão logado como pessoa física.", "unauthorized_user_message")
+        return render_template("/lojistaMenu.html")
+
+@app.route("/meusProdutosEServicos", methods =['GET'])
+def meusProdutosEservicos():
+        if(session["onSaleProducts"]["numberOfProducts"] == 0):
+            flash("Nenhum produto ou serviço cadastrados.", "empty_store_message")
+        return render_template("/meusProdutosEServicos.html")
+
+@app.route("/finalizarCompra", methods=['GET', 'POST'])
+def finalizarCompra():
+    if 'user' not in session:
+        return redirect('/login')
+
+    if request.method == 'GET':
+        cart_products= False
+
+        cart_data, total_value = cart_manager.queryCart(session['documentNumber'])
+        
+        if cart_data != None:
+            cart_products = True
+
+        return render_template("finalizarCompra.html", lista_de_itens=cart_data, totalValue=total_value, canBuy=bool(cart_products))
+
+    elif request.method == 'POST':
+        delivery_address = request.form.get('endereco')
+        payment_method = request.form.get('tipoPagamento')
+        order_id = Utils.get_order_id()
+        date = Utils.get_date()
+
+        # Atualiza o histórico de compras
+        user_manager.update_user(session['documentNumber'], {
+            'userHistory.orders': {
+                order_id: {
+                    'totalValue': sum(float(product['price']) for product in cart_products.values()),
+                    'deliveryAddress': delivery_address,
+                    'payment': payment_method,
+                    'orderDate': date
+                }
+            }
+        })
+        user_manager.update_purchases(session['documentNumber'], user_manager.query_completed_purchases(session['documentNumber']) + 1)
+
+        # Limpa o carrinho
+        cart_manager.clear_cart(session['documentNumber'])
+
+        flash(f'Pedido "{order_id}" efetuado com sucesso!', 'order_success')
+        return redirect("/meuHistorico")
+    # ... Implementação da rota de finalização da compra ...
 
 @app.route("/cadastroLoja", methods =['POST', 'GET'])
 def cadastroLoja():
@@ -411,148 +367,116 @@ def cadastroLoja():
              return render_template("/lojistaMenu.html")
      
     if request.method == 'POST':
-        idx = uuid.uuid4(),
-        uid = str(idx) 
+        uid = str(uuid.uuid4())
         email = request.form.get('email')
         name = request.form.get('nome')
-        document = request.form.get('cnpj')
-        document_formatted = document.replace("-", "").replace(".", "").replace("/", "")
+        document = request.form.get('cnpj').replace("-", "").replace(".", "").replace("/", "")
         password = request.form.get('password1')
         password_confirmation = request.form.get('password2')
-        # TODO: teremos profile picture?
-        # profilePicture = request.form.get('profilePicture')
-        return cadastrarUsuario("pessoaJuridica", password, password_confirmation, document_formatted, name, email, uid)
+       
+        if password != password_confirmation or len(password) < 7 or not Utils.validate_document(document):
+            flash("Dados de cadastro inválidos", "invalid_registration_data")
+            return redirect('/cadastroLoja')
+
+        hashed_password = Utils.hash_password(password)
+        user_data = {
+            "uid": uid,
+            "userName": name,
+            "userPassword": hashed_password,
+            "userEmail": email,
+            "onSaleProducts": {"products": {}, "numberOfProducts": 0},
+        }
+        user_manager.add_user(document, user_data)
+        return redirect('/login')
     else:
         return render_template('cadastroLoja.html')
 
-def checkUserPermissions(renderTemplate):
-    if(session["userType"] == "pessoaJuridica"):
-        flash("Você não tem acesso a esta sessão já logado como pessoa jurídica.", "unauthorized_user_message")
-        return render_template(renderTemplate) 
-    elif(session["userType"] == "pessoaFisica"):
-        flash("Você não tem acesso a esta sessão logado como pessoa física.", "unauthorized_user_message")
-        return render_template(renderTemplate) 
+@app.route("/user", methods=['POST', 'GET'])
+def user():
+    if 'userType' not in session:
+        return redirect('/login')
 
-@app.route("/meuCarrinho", methods =['GET', 'POST'])
-def meuCarrinho():
-    if request.method == 'GET':
-        numberOfProducts = queryNumberOfProducts()
-
-        if(int(numberOfProducts) == 0):
-            flash("Carrinho vazio.", "empty_cart_message")
-            return render_template("/meuCarrinho.html", canBuy = False)
-        else:
-            listOfProducts, _ = getCartProducts()
-            return render_template("/meuCarrinho.html", lista_de_itens=listOfProducts, canBuy = True) 
-    
-    elif request.method == 'POST':
-        productKey = request.form.get('chaveProduto')
-        productTitle = request.form.get('tituloProduto')
-
-        removeProductFromCart(product_key=productKey)
-        
-        flash(f'Produto "{productTitle}" removido do carrinho com sucesso!', 'cart_updated_success')
-        return redirect("/meuCarrinho")
-
-@app.route("/meuHistorico", methods =['GET'])
-def meuHistorico():
-    completedPurchases = queryCompletedPurchases()
-
-    if(int(completedPurchases) == 0):
-        flash("Nenhuma compra efetuada.", "empty_history_message")
-        return render_template("/meuHistorico.html")
+    if session["userType"] == "pessoaJuridica":
+        return redirect("/minhaLoja")
+    elif session["userType"] == "pessoaFisica":
+        flash(session["user"], "user_name")
+        return render_template("perfil.html")
     else:
-        listOfOrders = getUserHistory()
-        return render_template("/meuHistorico.html", lista_de_pedidos=listOfOrders) 
-    
-@app.route("/meusProdutosEServicos", methods =['GET'])
-def meusProdutosEservicos():
-        if(session["onSaleProducts"]["numberOfProducts"] == 0):
-            flash("Nenhum produto ou serviço cadastrados.", "empty_store_message")
-        return render_template("/meusProdutosEServicos.html")
-    
-@app.route("/logout", methods =['GET'])
+        return redirect('/')
+
+@app.route("/logout", methods=['GET'])
 def logout():
-    session.pop("user")
+    session.clear()
     return redirect("/")
 
-@app.route("/excluirConta", methods =["GET"])
+@app.route("/excluirConta", methods=["GET"])
 def deletarConta():
-    try:
-        users.child(session["documentNumber"]).delete()
-        session.pop("user")
-        return redirect("/")
-    except:
-         flash("Erro ao deletar conta.", "error_message_delete_account")
-         if(session["userType"] == "pessoaJuridica"):
-            return render_template("/minhaLoja.html")
-         elif(session["userType"] == "pessoaFisica"):
-            return render_template("/perfil.html")
-         
-@app.route("/produtos", methods = ['GET', 'POST'])
+    user_manager.delete_user(session["documentNumber"])
+    session.clear()
+    return redirect("/")
+
+@app.route("/produtos", methods=['GET', 'POST'])
 def produto():
     if request.method == 'GET':
-            if "user" not in session:
-                return redirect("/")
-            if (session["userType"] == "pessoaJuridica"):
-                return redirect("/")
-            else:
-                listaProdutos = consultar_Lojas()
-                return render_template("/produtos.html", lista_de_itens=listaProdutos)
+        if "user" not in session:
+            return redirect("/")
+        if session["userType"] == "pessoaJuridica":
+            return redirect("/")
+        else:
+            lista_de_itens = product_manager.query_products()
+            return render_template("/produtos.html", lista_de_itens=lista_de_itens)
     elif request.method == 'POST':
-        productTitle = request.form.get('tituloProduto')
-        productPrice = request.form.get('precoProduto')
-        productDescription = request.form.get('descricaoProduto')
+        product_title = request.form.get('tituloProduto')
+        product_price = request.form.get('precoProduto')
+        product_description = request.form.get('descricaoProduto')
 
-        addProductToCart(productTitle=productTitle, productPrice=productPrice, productDescription=productDescription)
+        product_data = {
+            'title': product_title,
+            'price': product_price,
+            'description': product_description
+        }
+        cart_manager.add_product_to_cart(session['documentNumber'], product_data)
 
-        flash(f'Produto "{productTitle}" adicionado ao carrinho com sucesso!', 'cart_updated_success')
+        flash(f'Produto "{product_title}" adicionado ao carrinho com sucesso!', 'cart_updated_success')
         return redirect("/produtos")
-    
-@app.route("/processarFinalizarCompra", methods = ['POST'])
+
+@app.route("/processarFinalizarCompra", methods=['POST'])
 def processPurchase():
+    # Esta rota pode incluir lógicas adicionais, como verificação de estoque ou aplicação de descontos
     return redirect('/finalizarCompra')
 
-@app.route("/finalizarCompra", methods = ['GET', 'POST'])
-def purchases():
-    if request.method == 'GET':
-        numberOfProducts = queryNumberOfProducts()
-
-        if(int(numberOfProducts) == 0):
-            flash("Carrinho vazio.", "empty_cart_message")
-            return render_template("/finalizarCompra.html", canBuy = False)
-        else:
-            listOfProducts, totalValue = getCartProducts()
-            return render_template("/finalizarCompra.html", lista_de_itens=listOfProducts, canBuy = True, totalValue = totalValue) 
-    
-    elif request.method == 'POST':
-        productKey = request.form.get('chaveProduto')
-        productTitle = request.form.get('tituloProduto')
-
-        removeProductFromCart(product_key=productKey)
-        
-        flash(f'Produto "{productTitle}" removido do carrinho com sucesso!', 'cart_updated_success')
-        return redirect("/finalizarCompra")
-
-@app.route("/efetuarPedido", methods = ['POST'])
+@app.route("/efetuarPedido", methods=['POST'])
 def purchaseDone():
-        totalValue = request.form.get('valorTotal')
-        deliveryAdress = request.form.get('endereco')
-        payment = request.form.get('tipoPagamento')
+    # Coletar informações do formulário
+    totalValue = request.form.get('valorTotal')
+    deliveryAddress = request.form.get('endereco')
+    payment = request.form.get('tipoPagamento')
 
-        orderId=getOrderID()
+    # Gerar ID de pedido e obter data atual
+    orderId = Utils.get_order_id()
+    date = Utils.get_date()
 
-        updateCart(totalValue=totalValue, deliveryAdress=deliveryAdress, payment=payment, date = getDate(), orderId=orderId)
+    # Atualizar histórico de pedidos do usuário
+    user_manager.set_history(session['documentNumber'], {
         
-        updatePurchases(completedPurchases = queryCompletedPurchases())
+                'totalValue': totalValue,
+                'deliveryAddress': deliveryAddress,
+                'payment': payment,
+                'orderDate': date
+            }, orderId
+    )
+    user_manager.update_purchases(session['documentNumber'], user_manager.query_completed_purchases(session['documentNumber']))
 
-        clearCart()
+    # Limpar o carrinho
+    cart_manager.clear_cart(session['documentNumber'])
 
-        flash(f'Pedido "{orderId}" efetuado com sucesso!', 'order_success')
-        return redirect("/meuHistorico")
+    flash(f'Pedido "{orderId}" efetuado com sucesso!', 'order_success')
+    return redirect("/meuHistorico")
 
+# ... (outras rotas conforme necessário) ...
 @app.route("/navbar")
 def navbar():
     return render_template("/navbar.html")
 
-
+if __name__ == "__main__":
+    app.run(debug=True)
