@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta content="IE=edge" http-equiv="X-UA-Compatible" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>PetHub RS</title>
+    <!-- All CSS -->
+    <link
+      href="{{ url_for('static', filename='css/bootstrap.min.css')}}"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css"
+    />
+    <link
+      href="{{ url_for('static', filename='css/style.css')}}"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    {% include 'navbar.html' %}
+    <!-- Inclui a barra de navegação -->
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %} {% for category, message in messages %}
+    <div
+      class="alert alert-{{ category }} alert-dismissible fade show"
+      role="alert"
+      style="
+        text-align: center;
+        position: fixed;
+        top: 60px;
+        width: 100%;
+        z-index: 1000;
+      "
+    >
+      {{ message }}
+      <button
+        type="button"
+        class="btn-close"
+        data-bs-dismiss="alert"
+        aria-label="Close"
+      ></button>
+    </div>
+    {% endfor %} {% endif %} {% endwith %}
+    <div class="container-fluid h-100">
+      <div
+        class="row h-100 justify-content-center align-items-center"
+        style="margin-top: 100px"
+      >
+        <div class="col-md-5">
+          <div class="card mt-2">
+            <div class="card-body">
+              <h5 class="card-title text-center">Finalizar Compra</h5>
+              {% with empty_cart_message =
+              get_flashed_messages(category_filter='empty_cart_message') %} {%
+              if empty_cart_message %} {% for message in empty_cart_message %}
+              <span class="card-title text-center"> {{ message }} </span>
+              {% endfor %} {% endif %} {% endwith %}
+            </div>
+            {% for item in lista_de_itens %}
+            <!-- Criando uma "box" para cada item -->
+            <div
+              id="item{{ loop.index }}"
+              class="position-relative item-box"
+              style="
+                background-color: #f0f0f0;
+                border: 1px solid #ccc;
+                padding: 10px;
+                margin-bottom: 10px;
+                border-radius: 5px;
+                position: relative;
+                margin-left: 15px;
+                margin-right: 15px;
+              "
+            >
+              <p>Título: {{ item[1]['title'] }}</p>
+              <p>Descrição: {{ item[1]['description'] }}</p>
+              <p>Preço: R$ {{ item[1]['price'] }}</p>
+              <form
+                class="form-inline d-flex justify-content-between"
+                method="POST"
+                action="/finalizarCompra"
+              >
+                <input
+                  type="hidden"
+                  name="chaveProduto"
+                  value="{{ item[0] }}"
+                />
+                <input
+                  type="hidden"
+                  name="tituloProduto"
+                  value="{{ item[1]['title'] }}"
+                />
+                <input
+                  type="hidden"
+                  name="precoProduto"
+                  value="{{ item[1]['price'] }}"
+                />
+                <input
+                  type="hidden"
+                  name="descricaoProduto"
+                  value="{{ item[1]['description'] }}"
+                />
+                <!-- Botão "Adicionar ao Carrinho" no canto inferior direito -->
+                <button
+                  class="btn btn-success btn-sm adicionar-ao-carrinho"
+                  type="submit"
+                  style="
+                    position: absolute;
+                    bottom: 5px;
+                    right: 5px;
+                    border-radius: 10px;
+                    padding: 5px 10px;
+                    background-color: #004e2c;
+                    color: white;
+                    border: none;
+                    cursor: pointer;
+                    z-index: 1;
+                  "
+                >
+                  Remover do Carrinho
+                </button>
+                <!-- Botão "Informações do Produto" ao lado de Adicionar carrinho -->
+              </form>
+              <button
+                class="btn btn-success btn-sm exibir-informacoes"
+                data-toggle="modal"
+                data-target="#informacoesDetalhadas{{ loop.index }}"
+                data-titulo="{{ item[1]['title'] }}"
+                data-descricao="{{ item[1]['description'] }}"
+                data-preco="{{ item[1]['price'] }}"
+                style="
+                  position: absolute;
+                  bottom: 5px;
+                  right: 180px;
+                  border-radius: 10px;
+                  padding: 5px 10px;
+                  background-color: #004e2c;
+                  color: white;
+                  border: none;
+                  cursor: pointer;
+                  z-index: 1;
+                "
+              >
+                Informações do Produto
+              </button>
+            </div>
+            <!-- Área para exibir informações detalhadas do produto -->
+            <div
+              class="modal fade"
+              id="informacoesDetalhadas{{ loop.index }}"
+              tabindex="-1"
+              role="dialog"
+              aria-labelledby="informacoesDetalhadasLabel"
+              aria-hidden="true"
+            >
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="informacoesDetalhadasLabel">
+                      Informações do Produto
+                    </h5>
+                    <button
+                      type="button"
+                      class="btn-close"
+                      data-bs-dismiss="modal"
+                      aria-label="Close"
+                    ></button>
+                  </div>
+                  <div class="modal-body">
+                    <p>
+                      <strong>Título:</strong>
+                      <span id="modalTitulo{{ loop.index }}"></span>
+                    </p>
+                    <p>
+                      <strong>Descrição:</strong>
+                      <span id="modalDescricao{{ loop.index }}"></span>
+                    </p>
+                    <p>
+                      <strong>Preço:</strong> R$
+                      <span id="modalPreco{{ loop.index }}"></span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+            <div>
+                <h4 style = "margin-left: 15px;"> <span>Subtotal: R$ {{totalValue}}</span></h4>
+            </div>
+          </div>
+          <div class="card mt-2">
+            <div class="card-body">
+              <h5 class="card-title text-center">
+                Escolha o método de pagamento
+              </h5>
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="paymentRadio"
+                  id="onDelivery"
+                  value="onDelivery"
+                />
+                <label class="form-check-label" for="onDelivery">
+                  Pague na entrega
+                </label>
+              </div>
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="paymentRadio"
+                  id="pix"
+                  value="pix"
+                />
+                <label class="form-check-label" for="pix"> PIX </label>
+              </div>
+            </div>
+          </div>
+          <div class="card card-entrega mt-2">
+            <div class="card-body">
+              <h5 class="card-title text-center">
+                Informe o endereço de entrega
+              </h5>
+              <!-- Formulário de Login -->
+              <form method="post" action="/efetuarPedido">
+                <!-- Campo de Usuário -->
+                <div class="form-group mb-1">
+                  <label for="endereco">Logradouro:</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="endereco"
+                    id="endereco"
+                    placeholder="Digite o endereço de entrega completo"
+                  />
+                  <input
+                  type="hidden"
+                  name="valorTotal"
+                  value="{{ totalValue }}"
+                />
+                <input
+                  type="hidden"
+                  name="tipoPagamento"
+                  id = "tipoPagamento"
+                  value=""
+                />
+                </div>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 20px;">
+            <button
+            class="btn btn-success btn-sm adicionar-ao-carrinho align-items-center btn-finalizar "
+            type="submit"
+            style="
+                   background-color: #004e2c;
+            color: white;
+            border: none;
+            cursor: pointer;
+            z-index: 1;
+                    "
+                >
+                Finalizar Compra
+            </button>
+        </div>    
+    </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS (Popper.js and jQuery are required for Bootstrap's JavaScript components) -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        // Oculta o card inicialmente
+        $(".card-entrega").hide();
+        $(".btn-finalizar").hide();
+        // Manipula a mudança nos radio buttons
+        $("input[name='paymentRadio']").change(function () {
+          // Verifica se o radio button selecionado é o PIX
+          if ($(this).val() === "pix" || $(this).val() === "onDelivery") {
+            // Se for, mostra o card de informar o endereço de entrega
+            $(".card-entrega").show();
+            $(".btn-finalizar").show();
+            $("#tipoPagamento").val($(this).val());
+          } else {
+            // Se não for, oculta o card de informar o endereço de entrega
+            $(".card-entrega").hide();
+            $(".btn-finalizar").hide();
+            $("#tipoPagamento").val("");
+          }
+        });
+
+        // Manipula o clique nos botões "Informações do Produto"
+        $(".exibir-informacoes").click(function () {
+          var index = $(this).closest("div").attr("id").replace("item", "");
+          var titulo = $(this).data("titulo");
+          var descricao = $(this).data("descricao");
+          var preco = $(this).data("preco");
+
+          // Atualize os elementos do modal com as informações
+          $("#modalTitulo" + index).text(titulo);
+          $("#modalDescricao" + index).text(descricao);
+          $("#modalPreco" + index).text(preco);
+
+          // Exibe o modal
+          $("#informacoesDetalhadas" + index).modal("show");
+        });
+      });
+    </script>
+  </body>
+</html>
