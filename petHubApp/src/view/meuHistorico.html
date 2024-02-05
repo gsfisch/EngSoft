@@ -29,6 +29,29 @@
                             {% endif %}
                         {% endwith %}	
                     </div>
+                    {% for item in lista_de_pedidos %}
+					<!-- Criando uma "box" para cada item -->
+					<div
+					  id="item{{ loop.index }}"
+					  class="position-relative item-box"
+					  style="
+						background-color: #f0f0f0;
+						border: 1px solid #ccc;
+						padding: 10px;
+						margin-bottom: 10px;
+						border-radius: 5px;
+						position: relative;
+						margin-left: 15px;
+						margin-right: 15px;
+					  "
+					>
+                      <h4>Pedido {{ loop.index }}</h4> 
+					  <p>Data: {{ item['orderDate'] }}</p>
+					  <p>Valor total: R$ {{ item['totalValue'] }}</p>
+					  <p>Endereço de entrega: R$ {{ item['deliveryAdress'] }}</p>
+					
+					</div>
+                    {% endfor %}
 				</div>
 			</div>
 		</div>

@@ -1,83 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta content="IE=edge" http-equiv="X-UA-Compatible">
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <head>
+    <meta charset="UTF-8" />
+    <meta content="IE=edge" http-equiv="X-UA-Compatible" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>PetHub RS</title>
     <!-- All CSS -->
-    <link href="{{ url_for('static', filename='css/bootstrap.min.css')}}" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
-    <link href="{{ url_for('static', filename='css/style.css')}}" rel="stylesheet">
-</head>
-<body>
-    {% include 'navbar.html' %} <!-- Inclui a barra de navegação -->
-    <div class="row justify-content-center" style="margin-top: 100px;">
-        <div class="col-md-5">
-            <div class="card mt-2">
-                <div class="card-body">
-                    <h5>Digite abaixo o nome do produto desejado:</h5>
-                    <form class="form-inline d-flex justify-content-between">
-                        <input class="form-control flex-grow-1" type="search" placeholder="Nome do Produto:" aria-label="Search">
-                        <button class="btn btn-outline-success ml-2" type="submit">Buscar</button>
-                    </form>
+    <link
+      href="{{ url_for('static', filename='css/bootstrap.min.css')}}"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css"
+    />
+    <link
+      href="{{ url_for('static', filename='css/style.css')}}"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+      <!-- Inclui a barra de navegação -->
+    {% include 'navbar.html' %}
+    <!-- Alerta de Produto Adicionado ao Carrinho -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+      <div
+        class="alert alert-{{ category }} alert-dismissible fade show"
+        role="alert"
+        style="text-align: center; position: fixed; top: 60px; width: 100%; z-index: 1000;"
+      >
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+      <button
+        type="button"
+        class="btn-close"
+        data-bs-dismiss="alert"
+        aria-label="Close"
+      ></button>
+    </div>
+    <div class="row justify-content-center" style="margin-top: 100px">
+      <div class="col-md-5">
+        <div class="card mt-2">
+          <div class="card-body">
+            <h5>Digite abaixo o nome do produto desejado:</h5>
+            <form class="form-inline d-flex justify-content-between">
+              <input
+                class="form-control flex-grow-1"
+                type="search"
+                placeholder="Nome do Produto:"
+                aria-label="Search"
+              />
+              <button class="btn btn-outline-success ml-2" type="submit">
+                Buscar
+              </button>
+            </form>
+          </div>
+          {% for item in lista_de_itens %}
+          <!-- Criando uma "box" para cada item -->
+          <div
+            id="item{{ loop.index }}"
+            class="position-relative item-box"
+            style="
+              background-color: #f0f0f0;
+              border: 1px solid #ccc;
+              padding: 10px;
+              margin-bottom: 10px;
+              border-radius: 5px;
+              position: relative;
+              margin-left: 15px;
+              margin-right: 15px;
+            "
+          >
+            <p>Título: {{ item['title'] }}</p>
+            <p>Descrição: {{ item['description'] }}</p>
+            <p>Preço: R$ {{ item['price'] }}</p>
+            <form
+              class="form-inline d-flex justify-content-between"
+              method="POST"
+              action="/produtos"
+            >
+              <input
+                type="hidden"
+                name="tituloProduto"
+                value="{{ item['title'] }}"
+              />
+              <input
+                type="hidden"
+                name="precoProduto"
+                value="{{ item['price'] }}"
+              />
+              <input
+                type="hidden"
+                name="descricaoProduto"
+                value="{{ item['description'] }}"
+              />
+              <!-- Botão "Adicionar ao Carrinho" no canto inferior direito -->
+              <button
+                class="btn btn-success btn-sm adicionar-ao-carrinho"
+                type="submit"
+                style="
+                  position: absolute;
+                  bottom: 5px;
+                  right: 5px;
+                  border-radius: 10px;
+                  padding: 5px 10px;
+                  background-color: #004e2c;
+                  color: white;
+                  border: none;
+                  cursor: pointer;
+                  z-index: 1;
+                "
+              >
+                Adicionar ao Carrinho
+              </button>
+              <!-- Botão "Informações do Produto" ao lado de Adicionar carrinho -->
+            </form>
+            <button
+              class="btn btn-success btn-sm exibir-informacoes"
+              data-toggle="modal"
+              data-target="#informacoesDetalhadas{{ loop.index }}"
+              data-titulo="{{ item['title'] }}"
+              data-descricao="{{ item['description'] }}"
+              data-preco="{{ item['price'] }}"
+              style="
+                position: absolute;
+                bottom: 5px;
+                right: 180px;
+                border-radius: 10px;
+                padding: 5px 10px;
+                background-color: #004e2c;
+                color: white;
+                border: none;
+                cursor: pointer;
+                z-index: 1;
+              "
+            >
+              Informações do Produto
+            </button>
+          </div>
+          <!-- Área para exibir informações detalhadas do produto -->
+          <div
+            class="modal fade"
+            id="informacoesDetalhadas{{ loop.index }}"
+            tabindex="-1"
+            role="dialog"
+            aria-labelledby="informacoesDetalhadasLabel"
+            aria-hidden="true"
+          >
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="informacoesDetalhadasLabel">
+                    Informações do Produto
+                  </h5>
+                  <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                  ></button>
                 </div>
-                {% for item in lista_de_itens %}
-                <!-- Criando uma "box" para cada item -->
-                <div id="item{{ loop.index }}" class="position-relative item-box" style="background-color: #f0f0f0; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px; position: relative; margin-left: 15px; margin-right: 15px;">
-                    <p>Título: {{ item['title'] }}</p>
-                    <p>Descrição: {{ item['description'] }}</p>
-                    <p>Preço: R$ {{ item['price'] }}</p>
-                    <!-- Botão "Adicionar ao Carrinho" no canto inferior direito -->
-                    <button class="btn btn-success btn-sm adicionar-ao-carrinho" style="position: absolute; bottom: 5px; right: 5px; border-radius: 10px; padding: 5px 10px; background-color: #004e2c; color: white; border: none; cursor: pointer; z-index: 1;">Adicionar ao Carrinho</button>
-                    <!-- Botão "Informações do Produto" ao lado de Adicionar carrinho -->
-                    <button class="btn btn-success btn-sm exibir-informacoes" data-toggle="modal" data-target="#informacoesDetalhadas{{ loop.index }}" data-titulo="{{ item['title'] }}" data-descricao="{{ item['description'] }}" data-preco="{{ item['price'] }}" style="position: absolute; bottom: 5px; right: 180px; border-radius: 10px; padding: 5px 10px; background-color: #004e2c; color: white; border: none; cursor: pointer; z-index: 1;">Informações do Produto</button>
+                <div class="modal-body">
+                  <p>
+                    <strong>Título:</strong>
+                    <span id="modalTitulo{{ loop.index }}"></span>
+                  </p>
+                  <p>
+                    <strong>Descrição:</strong>
+                    <span id="modalDescricao{{ loop.index }}"></span>
+                  </p>
+                  <p>
+                    <strong>Preço:</strong> R$
+                    <span id="modalPreco{{ loop.index }}"></span>
+                  </p>
                 </div>
-                <!-- Área para exibir informações detalhadas do produto -->
-                <div class="modal fade" id="informacoesDetalhadas{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="informacoesDetalhadasLabel" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="informacoesDetalhadasLabel">Informações do Produto</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <p><strong>Título:</strong> <span id="modalTitulo{{ loop.index }}"></span></p>
-                                <p><strong>Descrição:</strong> <span id="modalDescricao{{ loop.index }}"></span></p>
-                                <p><strong>Preço:</strong> R$ <span id="modalPreco{{ loop.index }}"></span></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
+              </div>
             </div>
+          </div>
+          {% endfor %}
         </div>
+      </div>
     </div>
     <!-- Bootstrap JS (Popper.js and jQuery are required for Bootstrap's JavaScript components) -->
-       <!-- Bootstrap JS (Popper.js and jQuery are required for Bootstrap's JavaScript components) -->
-       <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-       <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-   
-       <script>
-           $(document).ready(function () {
-               // Manipula o clique nos botões "Informações do Produto"
-               $('.exibir-informacoes').click(function () {
-                   var index = $(this).closest('div').attr('id').replace('item', '');
-                   var titulo = $(this).data('titulo');
-                   var descricao = $(this).data('descricao');
-                   var preco = $(this).data('preco');
-   
-                   // Atualize os elementos do modal com as informações
-                   $('#modalTitulo' + index).text(titulo);
-                   $('#modalDescricao' + index).text(descricao);
-                   $('#modalPreco' + index).text(preco);
-   
-                   // Exibe o modal
-                   $('#informacoesDetalhadas' + index).modal('show');
-               });
-           });
-       </script>
-   </body>
-   </html>
+    <!-- Bootstrap JS (Popper.js and jQuery are required for Bootstrap's JavaScript components) -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      $(document).ready(function () {
+        // Manipula o clique nos botões "Informações do Produto"
+        $(".exibir-informacoes").click(function () {
+          var index = $(this).closest("div").attr("id").replace("item", "");
+          var titulo = $(this).data("titulo");
+          var descricao = $(this).data("descricao");
+          var preco = $(this).data("preco");
+
+          // Atualize os elementos do modal com as informações
+          $("#modalTitulo" + index).text(titulo);
+          $("#modalDescricao" + index).text(descricao);
+          $("#modalPreco" + index).text(preco);
+
+          // Exibe o modal
+          $("#informacoesDetalhadas" + index).modal("show");
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -13,6 +13,20 @@
 </head>
 <body>
 	{% include 'navbar.html' %} <!-- Inclui a barra de navegação -->
+	{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+      <div
+        class="alert alert-{{ category }} alert-dismissible fade show"
+        role="alert"
+        style="text-align: center; position: fixed; top: 60px; width: 100%; z-index: 1000;"
+      >
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
     <div class="container-fluid h-100">
 		<div class="row h-100 justify-content-center align-items-center" style="margin-top: 100px;">
 			<div class="col-md-5">
@@ -27,15 +41,197 @@
 									</span>
 									{% endfor %}
 								{% endif %}
-							{% endwith %}	
+							{% endwith %}
+					</div>
+					{% for item in lista_de_itens %}
+					<!-- Criando uma "box" para cada item -->
+					<div
+					  id="item{{ loop.index }}"
+					  class="position-relative item-box"
+					  style="
+						background-color: #f0f0f0;
+						border: 1px solid #ccc;
+						padding: 10px;
+						margin-bottom: 10px;
+						border-radius: 5px;
+						position: relative;
+						margin-left: 15px;
+						margin-right: 15px;
+					  "
+					>
+					  <p>Título: {{ item[1]['title'] }}</p>
+					  <p>Descrição: {{ item[1]['description'] }}</p>
+					  <p>Preço: R$ {{ item[1]['price'] }}</p>
+					  <form
+						class="form-inline d-flex justify-content-between"
+						method="POST"
+						action="/meuCarrinho"
+					  >
+					  <input
+					  type="hidden"
+					  name="chaveProduto"
+					  value="{{ item[0] }}"
+					/>
+						<input
+						  type="hidden"
+						  name="tituloProduto"
+						  value="{{ item[1]['title'] }}"
+						/>
+						<input
+						  type="hidden"
+						  name="precoProduto"
+						  value="{{ item[1]['price'] }}"
+						/>
+						<input
+						  type="hidden"
+						  name="descricaoProduto"
+						  value="{{ item[1]['description'] }}"
+						/>
+						<!-- Botão "Adicionar ao Carrinho" no canto inferior direito -->
+						<button
+						  class="btn btn-success btn-sm adicionar-ao-carrinho"
+						  type="submit"
+						  style="
+							position: absolute;
+							bottom: 5px;
+							right: 5px;
+							border-radius: 10px;
+							padding: 5px 10px;
+							background-color: #004e2c;
+							color: white;
+							border: none;
+							cursor: pointer;
+							z-index: 1;
+						  "
+						>
+						  Remover do Carrinho
+						</button>
+						<!-- Botão "Informações do Produto" ao lado de Adicionar carrinho -->
+					</form>
+					<button
+					  class="btn btn-success btn-sm exibir-informacoes"
+					  data-toggle="modal"
+					  data-target="#informacoesDetalhadas{{ loop.index }}"
+					  data-titulo="{{ item[1]['title'] }}"
+					  data-descricao="{{ item[1]['description'] }}"
+					  data-preco="{{ item[1]['price'] }}"
+					  style="
+						position: absolute;
+						bottom: 5px;
+						right: 180px;
+						border-radius: 10px;
+						padding: 5px 10px;
+						background-color: #004e2c;
+						color: white;
+						border: none;
+						cursor: pointer;
+						z-index: 1;
+					  "
+					>
+					  Informações do Produto
+					</button>
+					</div>
+					<!-- Área para exibir informações detalhadas do produto -->
+					<div
+					  class="modal fade"
+					  id="informacoesDetalhadas{{ loop.index }}"
+					  tabindex="-1"
+					  role="dialog"
+					  aria-labelledby="informacoesDetalhadasLabel"
+					  aria-hidden="true"
+					>
+					  <div class="modal-dialog" role="document">
+						<div class="modal-content">
+						  <div class="modal-header">
+							<h5 class="modal-title" id="informacoesDetalhadasLabel">
+							  Informações do Produto
+							</h5>
+							<button
+							  type="button"
+							  class="btn-close"
+							  data-bs-dismiss="modal"
+							  aria-label="Close"
+							></button>
+						  </div>
+						  <div class="modal-body">
+							<p>
+							  <strong>Título:</strong>
+							  <span id="modalTitulo{{ loop.index }}"></span>
+							</p>
+							<p>
+							  <strong>Descrição:</strong>
+							  <span id="modalDescricao{{ loop.index }}"></span>
+							</p>
+							<p>
+							  <strong>Preço:</strong> R$
+							  <span id="modalPreco{{ loop.index }}"></span>
+							</p>
+						  </div>
+						</div>
+					  </div>
+					</div>
+					{% endfor %}
+					{% if canBuy %}
+					<div>
+					<form
+						class="form-inline d-flex justify-content-between"
+						style="margin-top: 45px" 
+						method="POST"
+						action="/processarFinalizarCompra"
+					  >
+						<button
+						  class="btn btn-success btn-sm adicionar-ao-carrinho"
+						  type="submit"
+						  style="
+							position: absolute;
+							bottom: 5px;
+							right: 20px;
+							border-radius: 10px;
+							padding: 5px 10px;
+							background-color: #004e2c;
+							color: white;
+							border: none;
+							cursor: pointer;
+							z-index: 1;
+						  "
+						>
+						  Finalizar Compra
+						</button>
+						<!-- Botão "Informações do Produto" ao lado de Adicionar carrinho -->
+					</form>
+				</div>
+				{% endif %}
+				  </div>
+				</div>
+			  </div>	
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
+
     <!-- Bootstrap JS (Popper.js and jQuery are required for Bootstrap's JavaScript components) -->
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+	<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+	<script>
+		$(document).ready(function () {
+		  // Manipula o clique nos botões "Informações do Produto"
+		  $(".exibir-informacoes").click(function () {
+			var index = $(this).closest("div").attr("id").replace("item", "");
+			var titulo = $(this).data("titulo");
+			var descricao = $(this).data("descricao");
+			var preco = $(this).data("preco");
+  
+			// Atualize os elementos do modal com as informações
+			$("#modalTitulo" + index).text(titulo);
+			$("#modalDescricao" + index).text(descricao);
+			$("#modalPreco" + index).text(preco);
+  
+			// Exibe o modal
+			$("#informacoesDetalhadas" + index).modal("show");
+		  });
+		});
+	  </script>
 </body>
 </html>
