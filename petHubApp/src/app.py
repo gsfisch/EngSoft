@@ -193,6 +193,16 @@ class productManager:
         numberOfProducts = product_manager.queryNumberOfProducts(user_document_number)
         self.product_ref.child(user_document_number).child('onSaleProducts').update({'numberOfProducts': int(numberOfProducts) - 1})
 
+
+    def add_product(self, user_document_number, product):
+        on_sale_products = self.product_ref.child(user_document_number).child('onSaleProducts')
+
+        on_sale_products.child('products').child(product['title']).set(product)
+
+        numberOfProducts = product_manager.queryNumberOfProducts(user_document_number)
+
+        on_sale_products.update({'numberOfProducts': int(numberOfProducts) + 1})
+    
 # Classe CartManager
 class CartManager:
     def __init__(self, user_manager):
@@ -539,13 +549,12 @@ def navbar():
 
 @app.route("/cadastrarProduto", methods =['GET', 'POST'])
 def cadastrarProduto():
+    if "user" not in session:
+        return redirect("/")
+    if (session["userType"] == "pessoaFisica"):
+        return redirect("/")
+    
     if request.method == 'GET':
-        if "user" not in session:
-            return redirect("/")
-        if (session["userType"] == "pessoaFisica"):
-            return redirect("/")
-
-        else:
             return render_template("/cadastrarProduto.html")
 
     elif request.method == 'POST':
@@ -553,26 +562,15 @@ def cadastrarProduto():
         productDescription = request.form.get('descricaoProduto')
         productPrice = request.form.get('precoProduto')
 
-
         product = {
             'price': productPrice,
             'description': productDescription,
             'title': productTitle
         }
 
-        onsale_products = users.child(f'{session["documentNumber"]}/onSaleProducts')
+        product_manager.add_product(user_document_number=session['documentNumber'], product = product)
 
-        # Adiciona o produto
-        onsale_products.child('products').child(productTitle).set(product)
-
-        #newQuantity = onsale_products.child('numberOfProducts').get() + 1
-
-
-        #onsale_products.update( {'numberOfProducts': newQuantity} )
-
-        #print( onsale_products.child('numberOfProducts').get() + 1)
-
-        return render_template("/cadastrarProduto.html")
+        return redirect('/editarProduto')
 
 
 @app.route("/editarProduto", methods=['GET', 'POST'])
