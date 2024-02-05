@@ -102,6 +102,21 @@ class Utils:
         if  wrong_password or wrong_document or  not_unique_document: 
             return True
 
+    @staticmethod
+    def invalid_password_change(password_encoded, password_confirmation_encoded, password_length):
+      wrong_password = False
+  
+      if  password_encoded != password_confirmation_encoded:
+          flash("as senhas escolhidas divergem", "invalid_password_message")
+          wrong_password = True
+      elif password_length < 7:
+          flash("senha inválida: a senha precisa ter no mínimo 6 caracteres", "invalid_password_message")
+          wrong_password = True
+  
+      if  wrong_password:
+          return True
+  
+
 # Classe UserManager
 class UserManager:
     def __init__(self):
@@ -143,7 +158,42 @@ class UserManager:
     def update_purchases(self, document_number, completedPurchases):
         self.users_ref.child(document_number).child('userHistory').update({'completedPurchases': int(completedPurchases) + 1})
 
-    # ... Métodos da classe UserManager como já definidos anteriormente ...
+    def alterarCadastroUsuario(self, password, password_confirmation, document,  name, email, must_change_password):
+        password_encoded = password.encode('utf-8')
+        password_confirmation_encoded = password_confirmation.encode('utf-8')
+        password_length = len(password)
+        
+        if must_change_password is True:
+            if Utils.invalid_password_change(password_encoded, password_confirmation_encoded, password_length):
+                return redirect('/alterarDados')
+            else:
+                # Create a SHA-1 hash object
+                sha1 = hashlib.sha1()
+    
+                # Update the hash object with the encoded password
+                sha1.update(password_encoded)
+    
+                # Get the hexadecimal representation of the hash
+                hashed_password = sha1.hexdigest()
+    
+            
+                self.users_ref.child(document).update(
+                    {
+                            "userName": name,
+                            "userEmail": email,
+                            "userPassword": hashed_password
+                    }
+                )
+        else:
+            self.users_ref.child(document).update(
+                    {
+                            "userName": name,
+                            "userEmail": email,
+                    }
+                )
+        session.pop("user")
+        return redirect("/")
+        # ... Métodos da classe UserManager como já definidos anteriormente ...
 class productManager:
     def __init__(self):
         self.product_ref = db.reference("/users")
@@ -288,6 +338,7 @@ def login():
             session["user"] = loginUser["userName"]
             session["documentNumber"] = document_number
             session["userType"] = "pessoaJuridica" if len(document_number) > 11 else "pessoaFisica"
+            session["email"] = loginUser["userEmail"]
             return redirect('/user')
         else:
             flash("Senha ou usuário inválidos", "invalid_user_password_message")
@@ -361,54 +412,7 @@ def meuHistorico():
         user_history = user_manager.query_history(session['documentNumber'])
         return render_template("/meuHistorico.html", lista_de_pedidos=user_history)
 
-def invalid_password_change(password_encoded, password_confirmation_encoded, password_length):
-    wrong_password = False
 
-    if  password_encoded != password_confirmation_encoded:
-        flash("as senhas escolhidas divergem", "invalid_password_message")
-        wrong_password = True
-    elif password_length < 7:
-        flash("senha inválida: a senha precisa ter no mínimo 6 caracteres", "invalid_password_message")
-        wrong_password = True
-
-    if  wrong_password:
-        return True
-
-def alterarCadastroUsuario(password, password_confirmation, document_formatted,  name, email, must_change_password):
-    password_encoded = password.encode('utf-8')
-    password_confirmation_encoded = password_confirmation.encode('utf-8')
-    password_length = len(password)
-    
-    if must_change_password == True:
-        if invalid_password_change(password_encoded, password_confirmation_encoded, password_length):
-            return redirect('/alterarDados')
-        else:
-            # Create a SHA-1 hash object
-            sha1 = hashlib.sha1()
-
-            # Update the hash object with the encoded password
-            sha1.update(password_encoded)
-
-            # Get the hexadecimal representation of the hash
-            hashed_password = sha1.hexdigest()
-
-        
-            users.child(document_formatted).update(
-                {
-                        "userName": name,
-                        "userEmail": email,
-                        "userPassword": hashed_password
-                }
-            )
-    else:
-        users.child(document_formatted).update(
-                {
-                        "userName": name,
-                        "userEmail": email,
-                }
-            )
-    session.pop("user")
-    return redirect("/")
 
 @app.route("/alterarDados", methods=["GET", "POST"])
 def alterarDados():
@@ -435,7 +439,7 @@ def alterarDados():
             document_formatted = session["documentNumber"]
 
         if must_change_name or must_change_email or must_change_password:  
-            return alterarCadastroUsuario(password, password_confirmation, document_formatted, name, email, must_change_password)
+            return user_manager.alterarCadastroUsuario(password, password_confirmation, document_formatted, name, email, must_change_password)
         else:
             if('user' in session):
                 if(session["userType"] == "pessoaJuridica"):
